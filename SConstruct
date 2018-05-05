@@ -7,21 +7,20 @@ import os
 
 env = Environment(
     PATH = os.environ['PATH'],
-    CC   = "x86_64-w64-mingw32-gcc",
-    CXX  = "x86_64-w64-mingw32-gcc",
+    tools = ['default', 'textfile'],
+    #CC   = "x86_64-w64-mingw32-gcc",
+    #CXX  = "x86_64-w64-mingw32-gcc",
 )
 
 #env.Append(CPPDEFINES = '-DPYLONG_BITS_IN_DIGIT=30')
 #env.Append(CPPDEFINES = '-DPY_FORMAT_SIZE_T="z"')
-
-#conf = Configure(env)
 
 #have_ssize=conf.CheckType('ssize_t')
 #conf.env.Append(CPPDEFINES = '-DHAVE_SSIZE_T={0}'.format(int(have_ssize)))
 
 #void_p_size = conf.CheckTypeSize('void*')
 #conf.env.Append(CPPDEFINES = '-DSIZEOF_VOID_P={0}'.format(void_p_size))
-#wchar_t_size = conf.CheckTypeSize('wchar_t')
+#
 #conf.env.Append(CPPDEFINES = '-DSIZEOF_WCHAR_T={0}'.format(wchar_t_size))
 #int_size = conf.CheckTypeSize('int')
 #conf.env.Append(CPPDEFINES = '-DSIZEOF_INT={0}'.format(int_size))
@@ -33,6 +32,115 @@ env = Environment(
 #conf.env.Append(CPPDEFINES = '-DSIZEOF_LONG_LONG={0}'.format(long_long_size))
 
 #env = conf.Finish()
+
+#
+# Replacement of configure.ac
+#
+
+conf = Configure(env)
+
+subst_dict = dict()
+
+# Type availability checks : line 2202
+
+#AC_TYPE_MODE_T
+#AC_TYPE_OFF_T
+#AC_TYPE_PID_T
+#AC_DEFINE_UNQUOTED([RETSIGTYPE],[void],[assume C89 semantics that RETSIGTYPE is always void])
+#AC_TYPE_SIZE_T
+#AC_TYPE_UID_T
+
+have_dict = {
+
+    "HAVE_SSIZE_T": conf.CheckType('ssize_t'),
+    "HAVE_GCC_UINT128_T": conf.CheckType('__uint128_t'),
+  
+    "HAVE_SYSEXITS_H": conf.CheckHeader('sys/exits.h'),
+    "HAVE_SYS_AUDIOIO_H": conf.CheckHeader('sys/audioio.h'),
+    "HAVE_SYS_BSDTTY_H": conf.CheckHeader('sys/bsdtty.h'),
+    "HAVE_SYS_DEVPOLL_H": conf.CheckHeader('sys/devpoll.h'),
+    # Define to 1 if you have the <> header file, and it defines `DIR'.
+    "HAVE_SYS_DIR_H": conf.CheckHeader('sys/dir.h'),
+    "HAVE_SYS_ENDIAN_H": conf.CheckHeader('sys/endian.h'),
+    "HAVE_SYS_EPOLL_H": conf.CheckHeader('sys/epoll.h'),
+    "HAVE_SYS_EVENT_H": conf.CheckHeader('sys/event.h'),
+    "HAVE_SYS_FILE_H": conf.CheckHeader('sys/file.h'),
+    "HAVE_SYS_IOCTL_H": conf.CheckHeader('sys/ioctl.h'),
+    "HAVE_SYS_KERN_CONTROL_H": conf.CheckHeader('sys/kern_control.h'),
+    "HAVE_SYS_LOADAVG_H": conf.CheckHeader('sys/loadavg.h'),
+    "HAVE_SYS_LOCK_H": conf.CheckHeader('sys/lock.h'),
+    "HAVE_SYS_MKDEV_H": conf.CheckHeader('sys/mkdev.'),
+    "HAVE_SYS_MODEM_H": conf.CheckHeader('sys/modem.h'),
+    "HAVE_SYS_NDIR_H": conf.CheckHeader('sys/ndir.h'),
+    "HAVE_SYS_PARAM_H": conf.CheckHeader('sys/param.h'),
+    "HAVE_SYS_POLL_H": conf.CheckHeader('sys/poll.h'),
+    "HAVE_SYS_RANDOM_H": conf.CheckHeader('sys/random.h'),
+    "HAVE_SYS_RESOURCE_H": conf.CheckHeader('sys/resource.h'),
+    "HAVE_SYS_SELECT_H": conf.CheckHeader('sys/select.h'),
+    "HAVE_SYS_SENDFILE_H": conf.CheckHeader('sys/sendfile.h'),
+    "HAVE_SYS_SOCKET_H": conf.CheckHeader('sys/socket.h'),
+    "HAVE_SYS_STATVFS_H": conf.CheckHeader('sys/statvfs.h'),
+    "HAVE_SYS_STAT_H": conf.CheckHeader('sys/stat.h'),
+    "HAVE_SYS_SYSCALL_H": conf.CheckHeader('sys/syscall.h'),
+    "HAVE_SYS_SYSMACROS_H": conf.CheckHeader('sys/sysmacros.h'),
+    "HAVE_SYS_SYS_DOMAIN_H": conf.CheckHeader('sys/sys_domain.h'),
+    "HAVE_SYS_TERMIO_H": conf.CheckHeader('sys/termio.h'),
+    "HAVE_SYS_TIMES_H": conf.CheckHeader('sys/times.h'),
+    "HAVE_SYS_TIME_H": conf.CheckHeader('sys/time.h'),
+    "HAVE_SYS_TYPES_H": conf.CheckHeader('sys/types.h'),
+    "HAVE_SYS_UIO_H": conf.CheckHeader('sys/uio.h'),
+    "HAVE_SYS_UN_H": conf.CheckHeader('sys/un.h'),
+    "HAVE_SYS_UTSNAME_H": conf.CheckHeader('sys/utsname.h'),
+    "HAVE_SYS_WAIT_H": conf.CheckHeader('sys/wait.h'),
+    "HAVE_SYS_XATTR_H": conf.CheckHeader('sys/xattr.h'),
+}
+
+for k, v in have_dict.items():
+    if v:
+        subst_dict["#undef {0}".format(k)] = "#define {0} 1".format(k)
+
+typesize_dict = {
+    "SIZEOF_WCHAR_T": conf.CheckTypeSize('wchar_t'),
+    "SIZEOF_DOUBLE": conf.CheckTypeSize('double'),
+    "SIZEOF_FLOAT": conf.CheckTypeSize('float'),
+    "SIZEOF_FPOS_T": conf.CheckTypeSize('fpos_t'),
+    "SIZEOF_INT": conf.CheckTypeSize('int'),
+    "SIZEOF_LONG": conf.CheckTypeSize('long'),
+    "SIZEOF_LONG_DOUBLE": conf.CheckTypeSize('long double'),
+    "SIZEOF_LONG_LONG": conf.CheckTypeSize('long long'),
+    "SIZEOF_OFF_T": conf.CheckTypeSize('off_t'),
+    "SIZEOF_PID_T": conf.CheckTypeSize('pid_t'),
+    "SIZEOF_PTHREAD_T": conf.CheckTypeSize('pthread_t'),
+    "SIZEOF_SHORT": conf.CheckTypeSize('short'),
+    "SIZEOF_SIZE_T": conf.CheckTypeSize('size_t'),
+    "SIZEOF_TIME_T": conf.CheckTypeSize('time_t'),
+    "SIZEOF_UINTPTR_T": conf.CheckTypeSize('uintptr_t'),
+    "SIZEOF_VOID_P": conf.CheckTypeSize('void *'),
+    "SIZEOF_WCHAR_T": conf.CheckTypeSize('wchar_t'),
+    "SIZEOF__BOOL": conf.CheckTypeSize('_Bool'),
+}
+
+for k, v in typesize_dict.items():
+    subst_dict["#undef {0}\n".format(k)] = "#define {0} {1}\n".format(k, v)
+
+type_dict = {
+    "off_t": conf.CheckType('off_t', '#include <sys/types.h>'),
+    "clock_t": conf.CheckType('clock_t', '#include <sys/types.h>'),
+}
+
+for k, v in type_dict.items():
+    if v:
+        subst_dict["#undef {0}".format(k)] = "/* #undef {0} */".format(k)
+
+env.Substfile('pyconfig.h.in', SUBST_DICT=subst_dict)
+
+#env.Command('pyconfig.h', , Copy('$TARGET', '$SOURCE'))
+
+#
+# Replacement of makesetup
+#
+# This part replaces the shell script in Modules/makesetup
+#
 
 env.Append(CPPPATH = ['Include', '.'])
 
