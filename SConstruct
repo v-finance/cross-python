@@ -180,12 +180,21 @@ have_dict = {
     "HAVE_STRINGS_H": conf.CheckHeader('strings.h'),
     "HAVE_STRING_H": conf.CheckHeader('string.h'),
     "HAVE_WCHAR_H": conf.CheckHeader('wchar.h'),
+    "HAVE_SIGNAL_H": conf.CheckHeader('signal.h'),
+    "HAVE_UTIME_H": conf.CheckHeader('utime.h'),
 
-    
-    # replace obsolete autoconf macros with constants
-    # obsolete according to autoconf documentation
-    "TIME_WITH_SYS_TIME": 1,
-    "STDC_HEADERS": 1,
+    "HAVE_TIMEGM": conf.CheckFunc('timegm'),
+    "HAVE_TIMES": conf.CheckFunc('times'),
+
+
+    # @todo : more complex checks in configure.ac
+    "HAVE_STD_ATOMIC": conf.CheckHeader('stdatomic.h'), # line 5397
+    "HAVE_BUILTIN_ATOMIC": conf.CheckHeader('stdatomic.h'),
+    "HAVE_STDARG_PROTOTYPES": conf.CheckHeader('stdarg.h'), # line 4057
+    "TM_IN_SYS_TIME": 0,
+    "SYS_SELECT_WITH_SYS_TIME": conf.CheckHeader('sys/select.h') and conf.CheckHeader('sys/time.h'),
+    "TIME_WITH_SYS_TIME": conf.CheckHeader('time.h') and conf.CheckHeader('sys/time.h'),
+
 }
 
 have_dict["HAVE_LARGEFILE_SUPPORT"] = ((typesize_dict["SIZEOF_OFF_T"] > typesize_dict["SIZEOF_LONG"]) and (typesize_dict["SIZEOF_LONG_LONG"] >= typesize_dict["SIZEOF_OFF_T"]))
@@ -215,7 +224,7 @@ for k, v in type_dict.items():
 
 env.Substfile('pyconfig.h.in', SUBST_DICT=subst_dict)
 
-#env.Command('pyconfig.h', , Copy('$TARGET', '$SOURCE'))
+env.Command(os.path.join('Modules', 'config.c'), os.path.join('Modules', 'config.c.in'), Copy('$TARGET', '$SOURCE'))
 
 #
 # Replacement of makesetup
