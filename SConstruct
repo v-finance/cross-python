@@ -41,6 +41,34 @@ conf = Configure(env)
 
 subst_dict = dict()
 
+# configure.ac line 122
+
+defines = {
+# The later defininition of _XOPEN_SOURCE disables certain features
+# on Linux, so we need _GNU_SOURCE to re-enable them (makedev, tm_zone).
+    "_GNU_SOURCE": "1", # Define on Linux to activate all library features])
+
+# The later defininition of _XOPEN_SOURCE and _POSIX_C_SOURCE disables
+# certain features on NetBSD, so we need _NETBSD_SOURCE to re-enable
+# them.
+    "_NETBSD_SOURCE": "1", # Define on NetBSD to activate all library features])
+
+# The later defininition of _XOPEN_SOURCE and _POSIX_C_SOURCE disables
+# certain features on FreeBSD, so we need __BSD_VISIBLE to re-enable
+# them.
+    "__BSD_VISIBLE": "1", # Define on FreeBSD to activate all library features])
+
+# The later defininition of _XOPEN_SOURCE and _POSIX_C_SOURCE disables
+# u_int on Irix 5.3. Defining _BSD_TYPES brings it back.
+    "_BSD_TYPES": "1", # Define on Irix to enable u_int])
+
+# The later defininition of _XOPEN_SOURCE and _POSIX_C_SOURCE disables
+# certain features on Mac OS X, so we need _DARWIN_C_SOURCE to re-enable
+# them.
+    "_DARWIN_C_SOURCE": "1", # Define on Darwin to activate all library features])
+
+}
+
 # Type availability checks : line 2202
 
 #AC_TYPE_MODE_T
@@ -50,9 +78,33 @@ subst_dict = dict()
 #AC_TYPE_SIZE_T
 #AC_TYPE_UID_T
 
+typesize_dict = {
+    "SIZEOF_WCHAR_T": conf.CheckTypeSize('wchar_t'),
+    "SIZEOF_DOUBLE": conf.CheckTypeSize('double'),
+    "SIZEOF_FLOAT": conf.CheckTypeSize('float'),
+    "SIZEOF_FPOS_T": conf.CheckTypeSize('fpos_t'),
+    "SIZEOF_INT": conf.CheckTypeSize('int'),
+    "SIZEOF_LONG": conf.CheckTypeSize('long'),
+    "SIZEOF_LONG_DOUBLE": conf.CheckTypeSize('long double'),
+    "SIZEOF_LONG_LONG": conf.CheckTypeSize('long long'),
+    "SIZEOF_OFF_T": conf.CheckTypeSize('off_t'),
+    "SIZEOF_PID_T": conf.CheckTypeSize('pid_t'),
+    "SIZEOF_PTHREAD_T": conf.CheckTypeSize('pthread_t'),
+    "SIZEOF_SHORT": conf.CheckTypeSize('short'),
+    "SIZEOF_SIZE_T": conf.CheckTypeSize('size_t'),
+    "SIZEOF_TIME_T": conf.CheckTypeSize('time_t'),
+    "SIZEOF_UINTPTR_T": conf.CheckTypeSize('uintptr_t'),
+    "SIZEOF_VOID_P": conf.CheckTypeSize('void *'),
+    "SIZEOF_WCHAR_T": conf.CheckTypeSize('wchar_t'),
+    "SIZEOF__BOOL": conf.CheckTypeSize('_Bool'),
+}
+
+for k, v in typesize_dict.items():
+    subst_dict["#undef {0}\n".format(k)] = "#define {0} {1}\n".format(k, v)
+
 have_dict = {
 
-    "HAVE_SSIZE_T": conf.CheckType('ssize_t'),
+    "HAVE_SSIZE_T": conf.CheckType('ssize_t', '#include <sys/types.h>'),
     "HAVE_GCC_UINT128_T": conf.CheckType('__uint128_t'),
   
     "HAVE_SYSEXITS_H": conf.CheckHeader('sys/exits.h'),
@@ -93,39 +145,68 @@ have_dict = {
     "HAVE_SYS_UTSNAME_H": conf.CheckHeader('sys/utsname.h'),
     "HAVE_SYS_WAIT_H": conf.CheckHeader('sys/wait.h'),
     "HAVE_SYS_XATTR_H": conf.CheckHeader('sys/xattr.h'),
+    "HAVE_STDLIB_H": conf.CheckHeader('stdlib.h'),
+    "HAVE_STDINT_H": conf.CheckHeader('stdint.h'),
+    "HAVE_ERRNO_H": conf.CheckHeader('errno.h'),
+    "HAVE_UNISTD_H": conf.CheckHeader('unistd.h'),
+    "HAVE_STDDEF_H": conf.CheckHeader('stddef.h'),
+    "HAVE_ALLOCA_H": conf.CheckHeader('alloca.h'),
+    "HAVE_ASM_TYPES_H": conf.CheckHeader('asm/types.h'),
+    "HAVE_BLUETOOTH_BLUETOOTH_H": conf.CheckHeader('bluetooth/bluetooth.h'),
+    "HAVE_BLUETOOTH_H": conf.CheckHeader('bluetooth.h'),
+    "HAVE_CONIO_H": conf.CheckHeader('conio.h'),
+    #"HAVE_CURSES_H": conf.CheckHeader('curses.h'),
+    "HAVE_DIRECT_H": conf.CheckHeader('direct.h'),
+    "HAVE_DIRENT_H": conf.CheckHeader('dirent.h'),
+    "HAVE_DLFCN_H": conf.CheckHeader('dlfcn.h'),
+    "HAVE_ENDIAN_H": conf.CheckHeader('endian.h'),
+    "HAVE_FCNTL_H": conf.CheckHeader('fcntl.h'),
+    "HAVE_GRP_H": conf.CheckHeader('grp.h'),
+    "HAVE_IEEEFP_H": conf.CheckHeader('ieeefp.h'),
+    "HAVE_INTTYPES_H": conf.CheckHeader('inttypes.h'),
+    "HAVE_IO_H": conf.CheckHeader('io.h'),
+    "HAVE_LANGINFO_H": conf.CheckHeader('langinfo.h'),
+    "HAVE_LIBINTL_H": conf.CheckHeader('libintl.h'),
+    "HAVE_LIBUTIL_H": conf.CheckHeader('libutil.h'),
+    "HAVE_LINUX_CAN_BCM_H": conf.CheckHeader('linux/can/bcm.h'),
+    "HAVE_LINUX_CAN_H": conf.CheckHeader('linux/can.h'),
+    "HAVE_LINUX_CAN_RAW_H": conf.CheckHeader('linux/can/raw.h'),
+    "HAVE_LINUX_NETLINK_H": conf.CheckHeader('linux/netlink.h'),
+    "HAVE_LINUX_RANDOM_H": conf.CheckHeader('linux/random.h'),
+    "HAVE_LINUX_TIPC_H": conf.CheckHeader('linux/tipc.'),
+    "HAVE_MEMORY_H": conf.CheckHeader('memory.h'),
+    "HAVE_NCURSES_H": conf.CheckHeader('ncurses.h'),
+    "HAVE_NDIR_H": conf.CheckHeader('ndir.h'),
+    "HAVE_STRINGS_H": conf.CheckHeader('strings.h'),
+    "HAVE_STRING_H": conf.CheckHeader('string.h'),
+    "HAVE_WCHAR_H": conf.CheckHeader('wchar.h'),
+
+    
+    # replace obsolete autoconf macros with constants
+    # obsolete according to autoconf documentation
+    "TIME_WITH_SYS_TIME": 1,
+    "STDC_HEADERS": 1,
 }
+
+have_dict["HAVE_LARGEFILE_SUPPORT"] = ((typesize_dict["SIZEOF_OFF_T"] > typesize_dict["SIZEOF_LONG"]) and (typesize_dict["SIZEOF_LONG_LONG"] >= typesize_dict["SIZEOF_OFF_T"]))
+
+# check for structures (configure.ac line 3950)
 
 for k, v in have_dict.items():
+    pattern = "#undef {0}".format(k)
     if v:
-        subst_dict["#undef {0}".format(k)] = "#define {0} 1".format(k)
+        subst_dict[pattern] = "#define {0} 1".format(k)
+    else:
+        subst_dict[pattern] = "/* " + pattern + " */"
 
-typesize_dict = {
-    "SIZEOF_WCHAR_T": conf.CheckTypeSize('wchar_t'),
-    "SIZEOF_DOUBLE": conf.CheckTypeSize('double'),
-    "SIZEOF_FLOAT": conf.CheckTypeSize('float'),
-    "SIZEOF_FPOS_T": conf.CheckTypeSize('fpos_t'),
-    "SIZEOF_INT": conf.CheckTypeSize('int'),
-    "SIZEOF_LONG": conf.CheckTypeSize('long'),
-    "SIZEOF_LONG_DOUBLE": conf.CheckTypeSize('long double'),
-    "SIZEOF_LONG_LONG": conf.CheckTypeSize('long long'),
-    "SIZEOF_OFF_T": conf.CheckTypeSize('off_t'),
-    "SIZEOF_PID_T": conf.CheckTypeSize('pid_t'),
-    "SIZEOF_PTHREAD_T": conf.CheckTypeSize('pthread_t'),
-    "SIZEOF_SHORT": conf.CheckTypeSize('short'),
-    "SIZEOF_SIZE_T": conf.CheckTypeSize('size_t'),
-    "SIZEOF_TIME_T": conf.CheckTypeSize('time_t'),
-    "SIZEOF_UINTPTR_T": conf.CheckTypeSize('uintptr_t'),
-    "SIZEOF_VOID_P": conf.CheckTypeSize('void *'),
-    "SIZEOF_WCHAR_T": conf.CheckTypeSize('wchar_t'),
-    "SIZEOF__BOOL": conf.CheckTypeSize('_Bool'),
-}
-
-for k, v in typesize_dict.items():
-    subst_dict["#undef {0}\n".format(k)] = "#define {0} {1}\n".format(k, v)
+for k,v in defines.items():
+    pattern = "#undef {0}".format(k)
+    subst_dict[pattern] = "#define {0} {1}".format(k, v)
 
 type_dict = {
     "off_t": conf.CheckType('off_t', '#include <sys/types.h>'),
     "clock_t": conf.CheckType('clock_t', '#include <sys/types.h>'),
+    #"ssize_t": conf.CheckType('ssize_t', '#include <sys/types.h>'),
 }
 
 for k, v in type_dict.items():
@@ -148,7 +229,7 @@ env.Append(CPPPATH = ['Include', '.'])
 
 MODNAMES=       []
 MODOBJS=        [
-    os.path.join('Modules', '_threadmodule.c'),
+    #os.path.join('Modules', '_threadmodule.c'),
     os.path.join('Modules', 'posixmodule.c'),
     os.path.join('Modules/errnomodule.c'),
     os.path.join('Modules/pwdmodule.c'),
