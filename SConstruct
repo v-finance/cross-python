@@ -12,26 +12,52 @@ env = Environment(
     #CXX  = "x86_64-w64-mingw32-gcc",
 )
 
-#env.Append(CPPDEFINES = '-DPYLONG_BITS_IN_DIGIT=30')
-#env.Append(CPPDEFINES = '-DPY_FORMAT_SIZE_T="z"')
+# === Variables set by configure
 
-#have_ssize=conf.CheckType('ssize_t')
-#conf.env.Append(CPPDEFINES = '-DHAVE_SSIZE_T={0}'.format(int(have_ssize)))
+VERSION=        '3.6'
+SOABI=		'cpython-36m-x86_64-linux-gnu'
+VPATH=          'sourcedir'
 
-#void_p_size = conf.CheckTypeSize('void*')
-#conf.env.Append(CPPDEFINES = '-DSIZEOF_VOID_P={0}'.format(void_p_size))
-#
-#conf.env.Append(CPPDEFINES = '-DSIZEOF_WCHAR_T={0}'.format(wchar_t_size))
-#int_size = conf.CheckTypeSize('int')
-#conf.env.Append(CPPDEFINES = '-DSIZEOF_INT={0}'.format(int_size))
-#long_size = conf.CheckTypeSize('long')
-#conf.env.Append(CPPDEFINES = '-DSIZEOF_LONG={0}'.format(long_size))
-#long_double_size = conf.CheckTypeSize('long double')
-#conf.env.Append(CPPDEFINES = '-DSIZEOF_LONG_DOUBLE={0}'.format(long_double_size))
-#long_long_size = conf.CheckTypeSize('long long')
-#conf.env.Append(CPPDEFINES = '-DSIZEOF_LONG_LONG={0}'.format(long_long_size))
+LIBS=		['pthread', 'dl', 'util',]
+LIBM=		['m']
+LIBC=		[]
+SYSLIBS=	LIBM + LIBC
 
-#env = conf.Finish()
+THREADOBJ=	os.path.join('Python', 'thread.c')
+DYNLOADFILE =   'dynload_stub.c' # dynload_shlib
+BUILDPYTHON=    'python'
+LIBRARY=	'python'
+
+# Install prefix for architecture-independent files
+prefix=		'.'
+
+# Install prefix for architecture-dependent files
+exec_prefix=	prefix
+
+# Compiler options
+OPT=		['-DNDEBUG', '-g', '-fwrapv', '-O3', '-Wall', '-Wstrict-prototypes']
+BASECFLAGS=	['-Wno-unused-result', '-Wsign-compare']
+BASECPPFLAGS=	[]
+CONFIGURE_CFLAGS= []	
+# CFLAGS_NODIST is used for building the interpreter and stdlib C extensions.
+# Use it when a compiler flag should _not_ be part of the distutils CFLAGS
+# once Python is installed (Issue #21121).
+CONFIGURE_CFLAGS_NODIST= ['-std=c99', '-Wextra', '-Wno-unused-result', '-Wno-unused-parameter', '-Wno-missing-field-initializers']
+CONFIGURE_CPPFLAGS=	 []
+CONFIGURE_LDFLAGS=	 []
+# Avoid assigning CFLAGS, LDFLAGS, etc. so users can use them on the
+# command line to append to these values without stomping the pre-set
+# values.
+PY_CFLAGS=	BASECFLAGS + OPT + CONFIGURE_CFLAGS
+PY_CFLAGS_NODIST= CONFIGURE_CFLAGS_NODIST
+# Both CPPFLAGS and LDFLAGS need to contain the shell's value for setup.py to
+# be able to build extension modules using the directories specified in the
+# environment variables
+PY_CPPFLAGS=	BASECPPFLAGS + CONFIGURE_CPPFLAGS
+# Extra C flags added for building the interpreter object files.
+CFLAGSFORSHARED=[]
+# C flags used for building the interpreter object files
+PY_CORE_CFLAGS = PY_CFLAGS + PY_CFLAGS_NODIST + PY_CPPFLAGS + CFLAGSFORSHARED + ['-DPy_BUILD_CORE']
 
 #
 # Replacement of configure.ac
@@ -185,7 +211,10 @@ have_dict = {
 
     "HAVE_TIMEGM": conf.CheckFunc('timegm'),
     "HAVE_TIMES": conf.CheckFunc('times'),
-
+    "HAVE_CLOCK_GETTIME": conf.CheckFunc('clock_gettime'),
+    "HAVE_CLOCK": conf.CheckFunc('clock'),
+    "HAVE_LSTAT": conf.CheckFunc('lstat'),
+    "HAVE_LUTIMES": conf.CheckFunc('lutimes'),
 
     # @todo : more complex checks in configure.ac
     "HAVE_STD_ATOMIC": conf.CheckHeader('stdatomic.h'), # line 5397
@@ -195,6 +224,8 @@ have_dict = {
     "SYS_SELECT_WITH_SYS_TIME": conf.CheckHeader('sys/select.h') and conf.CheckHeader('sys/time.h'),
     "TIME_WITH_SYS_TIME": conf.CheckHeader('time.h') and conf.CheckHeader('sys/time.h'),
 
+    "HAVE_DYNAMIC_LOADING": 0,
+
 }
 
 have_dict["HAVE_LARGEFILE_SUPPORT"] = ((typesize_dict["SIZEOF_OFF_T"] > typesize_dict["SIZEOF_LONG"]) and (typesize_dict["SIZEOF_LONG_LONG"] >= typesize_dict["SIZEOF_OFF_T"]))
@@ -202,11 +233,11 @@ have_dict["HAVE_LARGEFILE_SUPPORT"] = ((typesize_dict["SIZEOF_OFF_T"] > typesize
 # check for structures (configure.ac line 3950)
 
 for k, v in have_dict.items():
-    pattern = "#undef {0}".format(k)
+    pattern = "#undef {0}\n".format(k)
     if v:
-        subst_dict[pattern] = "#define {0} 1".format(k)
+        subst_dict[pattern] = "#define {0} 1\n".format(k)
     else:
-        subst_dict[pattern] = "/* " + pattern + " */"
+        subst_dict[pattern] = "/* " + pattern + " */\n"
 
 for k,v in defines.items():
     pattern = "#undef {0}".format(k)
@@ -224,7 +255,58 @@ for k, v in type_dict.items():
 
 env.Substfile('pyconfig.h.in', SUBST_DICT=subst_dict)
 
-env.Command(os.path.join('Modules', 'config.c'), os.path.join('Modules', 'config.c.in'), Copy('$TARGET', '$SOURCE'))
+#
+# replacement of Setup.dist
+#
+
+# The modules listed here can't be built as shared libraries for
+# various reasons; therefore they are listed here instead of in the
+# normal order.
+
+static_modules = {
+    # This only contains the minimal set of modules required to run the
+    # setup.py script in the root of the Python source tree.
+    
+    'posix': 'posixmodule.c',		# posix (UNIX) system calls
+    'errno': 'errnomodule.c',		# posix (UNIX) errno values
+    'pwd': 'pwdmodule.c',			# this is needed to find out the user's home dir
+                                    # if $HOME is not set
+    '_sre': '_sre.c',			# Fredrik Lundh's new regular expressions
+    '_codecs': '_codecsmodule.c',		# access to the builtin codecs and codec registry
+    '_weakref': '_weakref.c',		# weak references
+    '_functools': '_functoolsmodule.c',   # Tools for working with functions and callable objects
+    '_operator': '_operator.c',	        # operator.add() and similar goodies
+    '_collections': '_collectionsmodule.c', # Container types
+    'itertools': 'itertoolsmodule.c',    # Functions creating iterators for efficient looping
+    'atexit': 'atexitmodule.c',      # Register functions to be run at interpreter-shutdown
+    '_signal': 'signalmodule.c',
+    '_stat': '_stat.c',			# stat.h interface
+    'time': 'timemodule.c',	# -lm # time operations and variables
+    
+    # access to ISO C locale support
+    '_locale': '_localemodule.c',  # -lintl
+    
+    # Standard I/O baseline
+    '_io': '-I$(srcdir)/Modules/_io _io/_iomodule.c _io/iobase.c _io/fileio.c _io/bytesio.c _io/bufferedio.c _io/textio.c _io/stringio.c',
+    
+    # The zipimport module is always imported at startup. Having it as a
+    # builtin module avoids some bootstrapping problems and reduces overhead.
+    'zipimport': 'zipimport.c',
+    
+    # faulthandler module
+    'faulthandler': 'faulthandler.c',
+    
+    # debug tool to trace memory blocks allocated by Python
+    '_tracemalloc': '_tracemalloc.c hashtable.c',
+}
+
+config_c = env.Substfile(os.path.join('Modules', 'config.c.in'), SUBST_DICT={
+    # keys in the dict act as regexp
+    "/\* -- ADDMODULE MARKER 1 -- \*/": "\n".join([
+        "extern PyObject* PyInit_{0}(void);".format(module_name) for module_name in static_modules.keys()]),
+    "/\* -- ADDMODULE MARKER 2 -- \*/": "\n".join([
+        '{' + '"{0}", PyInit_{0}'.format(module_name) + '},' for module_name in static_modules.keys()])
+})[0]
 
 #
 # Replacement of makesetup
@@ -271,61 +353,29 @@ MODOBJS=        [
 
 MODLIBS=        []
 
-# === Variables set by configure
+# Scons Defines
 
-VERSION=        '3.6'
-SOABI=		'cpython-36m-x86_64-linux-gnu'
-VPATH=          'sourcedir'
+PYTHONPATH=''
 
-LIBS=		['pthread', 'dl', 'util',]
-LIBM=		['m']
-LIBC=		[]
-SYSLIBS=	LIBM + LIBC
+env.Append(CPPDEFINES = '-DPYTHONPATH=\'"{0}"\''.format(PYTHONPATH))
+env.Append(CPPDEFINES = '-DPREFIX=\'"{0}"\''.format(prefix))
+env.Append(CPPDEFINES = '-DEXEC_PREFIX=\'"{0}"\''.format(exec_prefix))
+env.Append(CPPDEFINES = '-DVERSION=\'"{0}"\''.format(VERSION))
+env.Append(CPPDEFINES = '-DVPATH=\'"{0}"\''.format(VPATH))
+for f in PY_CORE_CFLAGS:
+    env.Append(CFLAGS = f)
 
-THREADOBJ=	os.path.join('Python', 'thread.c')
-DYNLOADFILE=	'dynload_shlib.o'
-BUILDPYTHON=    'python'
-LIBRARY=	'python'
-
-# Install prefix for architecture-independent files
-prefix=		'.'
-
-# Install prefix for architecture-dependent files
-exec_prefix=	prefix
-
-# Compiler options
-OPT=		['-DNDEBUG', '-g', '-fwrapv', '-O3', '-Wall', '-Wstrict-prototypes']
-BASECFLAGS=	['-Wno-unused-result', '-Wsign-compare']
-BASECPPFLAGS=	[]
-CONFIGURE_CFLAGS= []	
-# CFLAGS_NODIST is used for building the interpreter and stdlib C extensions.
-# Use it when a compiler flag should _not_ be part of the distutils CFLAGS
-# once Python is installed (Issue #21121).
-CONFIGURE_CFLAGS_NODIST= ['-std=c99', '-Wextra', '-Wno-unused-result', '-Wno-unused-parameter', '-Wno-missing-field-initializers']
-CONFIGURE_CPPFLAGS=	 []
-CONFIGURE_LDFLAGS=	 []
-# Avoid assigning CFLAGS, LDFLAGS, etc. so users can use them on the
-# command line to append to these values without stomping the pre-set
-# values.
-PY_CFLAGS=	BASECFLAGS + OPT + CONFIGURE_CFLAGS
-PY_CFLAGS_NODIST= CONFIGURE_CFLAGS_NODIST
-# Both CPPFLAGS and LDFLAGS need to contain the shell's value for setup.py to
-# be able to build extension modules using the directories specified in the
-# environment variables
-PY_CPPFLAGS=	BASECPPFLAGS + CONFIGURE_CPPFLAGS
-# Extra C flags added for building the interpreter object files.
-CFLAGSFORSHARED=[]
-# C flags used for building the interpreter object files
-PY_CORE_CFLAGS = PY_CFLAGS + PY_CFLAGS_NODIST + PY_CPPFLAGS + CFLAGSFORSHARED + ['-DPy_BUILD_CORE']
+dynload_env = env.Clone()
+dynload_env.Append(CPPDEFINES = '-DSOABI=\'"{0}"\''.format(SOABI))
+dynload_obj = str(dynload_env.Object(os.path.join('Python', DYNLOADFILE))[0])
 
 # === Definitions added by makesetup ===
 
-PYTHONPATH=''
 
 ##########################################################################
 # Modules
 MODULE_OBJS = [
-    os.path.join('Modules', 'config.c'),
+    config_c,
     os.path.join('Modules', 'getpath.c'),
     os.path.join('Modules', 'main.c'),
     os.path.join('Modules', 'gcmodule.c'),
@@ -430,7 +480,7 @@ PYTHON_OBJS = [
     os.path.join('Python', 'dtoa.c'),
     os.path.join('Python', 'formatter_unicode.c'),
     os.path.join('Python', 'fileutils.c'),
-    os.path.join('Python', DYNLOADFILE),
+    os.path.join(dynload_obj),
     #os.path.join('$(LIBOBJS'),
     #os.path.join('$(MACHDEP_OBJS'),
     THREADOBJ,
@@ -508,19 +558,7 @@ DTRACE_DEPS = [
 
 # XXX: should gcmodule, etc. be here, too?
 
-# Scons Defines
 
-env.Append(CPPDEFINES = '-DPYTHONPATH=\'"{0}"\''.format(PYTHONPATH))
-env.Append(CPPDEFINES = '-DPREFIX=\'"{0}"\''.format(prefix))
-env.Append(CPPDEFINES = '-DEXEC_PREFIX=\'"{0}"\''.format(exec_prefix))
-env.Append(CPPDEFINES = '-DVERSION=\'"{0}"\''.format(VERSION))
-env.Append(CPPDEFINES = '-DVPATH=\'"{0}"\''.format(VPATH))
-for f in PY_CORE_CFLAGS:
-    env.Append(CFLAGS = f)
-
-dynload_env = env.Clone()
-dynload_env.Append(CPPDEFINES = '-DSOABI=\'"{0}"\''.format(SOABI))
-dynload_env.Object(os.path.join('Python', 'dynload_shlib.c'))
         
 env.Program('pgen', PGENOBJS)
 
