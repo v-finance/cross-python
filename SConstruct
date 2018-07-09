@@ -558,8 +558,6 @@ DTRACE_DEPS = [
 
 # XXX: should gcmodule, etc. be here, too?
 
-
-        
 env.Program('pgen', PGENOBJS)
 
 # Build static library
@@ -574,22 +572,3 @@ interpreter_env.Append(LIBPATH = '.')
 interpreter_env.Append(LIBS = [LIBRARY]+LIBS+SYSLIBS+MODLIBS)
 
 interpreter_env.Program(BUILDPYTHON, [os.path.join('Programs', 'python.c')])
-
-
-        #$(LDLIBRARY) $(PY3LIBRARY)
-        #$(LINKCC) $(PY_LDFLAGS) $(LINKFORSHARED) -o $@ Programs/python.o $(BLDLIBRARY) $(LDLAST)
-        
-#env.Object('Objects/abstract.c')
-object_sources = Glob('Objects/*.c')
-for objects_src in object_sources:
-    env.Object(objects_src)
-
-#libpython = env.SharedLibrary('python3', object_sources)
-#env.Program(os.path.join('Programs', 'python.c'), LIBS=libpython)
-
-
-
-#for parser_src in Glob('Parser/*.c'):
-    #env.Object(parser_src)
-#for python_src in Glob('Python/*.c'):
-    #env.Object(python_src)
