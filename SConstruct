@@ -8,8 +8,11 @@ import os
 env = Environment(
     PATH = os.environ['PATH'],
     tools = ['default', 'textfile'],
-    #CC   = "x86_64-w64-mingw32-gcc",
-    #CXX  = "x86_64-w64-mingw32-gcc",
+    CC   = "x86_64-w64-mingw32-gcc-win32",
+    CXX  = "x86_64-w64-mingw32-gcc-win32",
+    AR = "x86_64-w64-mingw32-ar",
+    LDMODULE = "x86_64-w64-mingw32-ld",
+    LDFLAGS = "--allow-multiple-definition",
 )
 
 # === Variables set by configure
@@ -18,7 +21,7 @@ VERSION=        '3.6'
 SOABI=		'cpython-36m-x86_64-linux-gnu'
 VPATH=          'sourcedir'
 
-LIBS=		['pthread', 'dl', 'util',]
+LIBS=		['pthread', 'version', 'mingw32', 'ws2_32', 'shlwapi']# 'dl', 'util',]
 LIBM=		['m']
 LIBC=		[]
 SYSLIBS=	LIBM + LIBC
@@ -35,7 +38,9 @@ prefix=		'.'
 exec_prefix=	prefix
 
 # Compiler options
-OPT=		['-DNDEBUG', '-g', '-fwrapv', '-O3', '-Wall', '-Wstrict-prototypes']
+OPT=		['-DNDEBUG', '-g', '-fwrapv', '-O3', '-Wall', '-Wstrict-prototypes',
+                 # for mingw
+                 '-mwindows', '-municode']
 BASECFLAGS=	['-Wno-unused-result', '-Wsign-compare']
 BASECPPFLAGS=	[]
 CONFIGURE_CFLAGS= []	
@@ -92,7 +97,10 @@ defines = {
 # certain features on Mac OS X, so we need _DARWIN_C_SOURCE to re-enable
 # them.
     "_DARWIN_C_SOURCE": "1", # Define on Darwin to activate all library features])
+    
+    #"PY_FORMAT_SIZE_T": "z",
 
+   
 }
 
 # Type availability checks : line 2202
@@ -121,12 +129,13 @@ typesize_dict = {
     "SIZEOF_TIME_T": conf.CheckTypeSize('time_t'),
     "SIZEOF_UINTPTR_T": conf.CheckTypeSize('uintptr_t'),
     "SIZEOF_VOID_P": conf.CheckTypeSize('void *'),
-    "SIZEOF_WCHAR_T": conf.CheckTypeSize('wchar_t'),
     "SIZEOF__BOOL": conf.CheckTypeSize('_Bool'),
 }
 
 for k, v in typesize_dict.items():
-    subst_dict["#undef {0}\n".format(k)] = "#define {0} {1}\n".format(k, v)
+    # v will be zero if the type does not exists
+    if v:
+        subst_dict["#undef {0}\n".format(k)] = "#define {0} {1}\n".format(k, v)
 
 have_dict = {
 
@@ -215,6 +224,23 @@ have_dict = {
     "HAVE_CLOCK": conf.CheckFunc('clock'),
     "HAVE_LSTAT": conf.CheckFunc('lstat'),
     "HAVE_LUTIMES": conf.CheckFunc('lutimes'),
+    "HAVE_COPYSIGN": conf.CheckFunc('copysign'),
+    "HAVE_ACOSH": conf.CheckFunc('acosh'),
+    "HAVE_ASINH": conf.CheckFunc('asinh'),
+    "HAVE_ATANH": conf.CheckFunc('atanh'),
+    "HAVE_ERF": conf.CheckFunc('erf'),
+    "HAVE_ERFC": conf.CheckFunc('erfc'),
+    "HAVE_EXPM1": conf.CheckFunc('expm1'),
+    "HAVE_FINITE": conf.CheckFunc('finite'),
+    "HAVE_GAMMA": conf.CheckFunc('gamma'),
+    "HAVE_HYPOT": conf.CheckFunc('hypot'),
+    "HAVE_LGAMMA": conf.CheckFunc('lgamma'),
+    "HAVE_LOG1P": conf.CheckFunc('log1p'),
+    "HAVE_LOG2": conf.CheckFunc('log2'),
+    "HAVE_ROUND": conf.CheckFunc('round'),
+    "HAVE_TGAMMA": conf.CheckFunc('tgamma'),
+
+    "HAVE_WMEMCMP": conf.CheckFunc('wmemcmp'),
 
     # @todo : more complex checks in configure.ac
     "HAVE_STD_ATOMIC": conf.CheckHeader('stdatomic.h'), # line 5397
@@ -253,6 +279,59 @@ for k, v in type_dict.items():
     if v:
         subst_dict["#undef {0}".format(k)] = "/* #undef {0} */".format(k)
 
+# add defines that are not provisioned in pyconfig.h.in
+
+additional_defines_dict = {
+    "MS_WINDOWS": conf.CheckHeader('windows.h'),
+}
+
+additional_defines = []
+for k, v in additional_defines_dict.items():
+    if v:
+        additional_defines.append("#define {0} {1}".format(k, v))
+
+if additional_defines_dict["MS_WINDOWS"]:
+    additional_defines.append("""
+
+/* when mingwd detects _MSC_VER, it puts CRT functions inline, the MSC_VER should not be there, but then the compilation fails */
+/* #define _MSC_VER 1900 */
+/* #define __CRT__NO_INLINE */
+
+/* set the version macros for the windows headers */
+/* Python 3.5+ requires Windows Vista or greater */
+#define Py_WINVER 0x0601 /* _WIN32_WINNT_VISTA */
+#define Py_NTDDI NTDDI_VISTA
+
+/* We only set these values when building Python - we don't want to force
+   these values on extensions, as that will affect the prototypes and
+   structures exposed in the Windows headers. Even when building Python, we
+   allow a single source file to override this - they may need access to
+   structures etc so it can optionally use new Windows features if it
+   determines at runtime they are available.
+*/
+#ifndef NTDDI_VERSION
+#define NTDDI_VERSION Py_NTDDI
+#ifndef WINVER
+#define WINVER Py_WINVER
+#endif
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT Py_WINVER
+#endif
+#endif
+
+/* these appear to be missing from mingw */
+
+#define MEM_COMMIT 0x00001000
+#define MEM_RESERVE 0x00002000
+#define PAGE_READWRITE 0x04
+#define MEM_RELEASE 0x8000
+
+
+
+""")
+
+subst_dict["#define Py_PYCONFIG_H"] = "\n".join(["#define Py_PYCONFIG_H"] + additional_defines)
+
 env.Substfile('pyconfig.h.in', SUBST_DICT=subst_dict)
 
 #
@@ -269,7 +348,7 @@ static_modules = {
     
     'posix': 'posixmodule.c',		# posix (UNIX) system calls
     'errno': 'errnomodule.c',		# posix (UNIX) errno values
-    'pwd': 'pwdmodule.c',			# this is needed to find out the user's home dir
+    #'pwd': 'pwdmodule.c',			# this is needed to find out the user's home dir
                                     # if $HOME is not set
     '_sre': '_sre.c',			# Fredrik Lundh's new regular expressions
     '_codecs': '_codecsmodule.c',		# access to the builtin codecs and codec registry
@@ -316,6 +395,9 @@ config_c = env.Substfile(os.path.join('Modules', 'config.c.in'), SUBST_DICT={
 
 env.Append(CPPPATH = ['Include', '.'])
 
+if additional_defines_dict['MS_WINDOWS'] == True:
+    env.Append(CPPPATH = ['PC'])
+
 # === Variables set by makesetup ===
 
 MODNAMES=       []
@@ -323,7 +405,7 @@ MODOBJS=        [
     #os.path.join('Modules', '_threadmodule.c'),
     os.path.join('Modules', 'posixmodule.c'),
     os.path.join('Modules/errnomodule.c'),
-    os.path.join('Modules/pwdmodule.c'),
+    #os.path.join('Modules/pwdmodule.c'),
     os.path.join('Modules/_sre.c'),
     os.path.join('Modules/_codecsmodule.c'),  
     os.path.join('Modules/_weakref.c'),
@@ -335,7 +417,8 @@ MODOBJS=        [
     os.path.join('Modules/signalmodule.c'),
     os.path.join('Modules/_stat.c'),
     os.path.join('Modules/timemodule.c'),  
-    os.path.join('Modules/_localemodule.c'),  
+    os.path.join('Modules/_localemodule.c'), 
+    os.path.join('Modules/_io/winconsoleio.c'), # on windows
     os.path.join('Modules/_io/_iomodule.c'),
     os.path.join('Modules/_io/iobase.c'),
     os.path.join('Modules/_io/fileio.c'),
@@ -376,10 +459,14 @@ dynload_obj = str(dynload_env.Object(os.path.join('Python', DYNLOADFILE))[0])
 # Modules
 MODULE_OBJS = [
     config_c,
-    os.path.join('Modules', 'getpath.c'),
     os.path.join('Modules', 'main.c'),
     os.path.join('Modules', 'gcmodule.c'),
 ]
+
+if additional_defines_dict['MS_WINDOWS'] == True:
+    MODULE_OBJS.append(os.path.join('PC', 'getpathp.c'))
+else:
+    MODULE_OBJS.append(os.path.join('Modules', 'getpath.c'))
 
 IO_H = [
     os.path.join('Modules', '_io', '_iomodule.h'),
@@ -571,4 +658,7 @@ interpreter_env = env.Clone()
 interpreter_env.Append(LIBPATH = '.')
 interpreter_env.Append(LIBS = [LIBRARY]+LIBS+SYSLIBS+MODLIBS)
 
-interpreter_env.Program(BUILDPYTHON, [os.path.join('Programs', 'python.c')])
+interpreter_env.Program(BUILDPYTHON, [
+    os.path.join('Programs', 'python.c'),
+    #os.path.join('PC', 'WinMain.c'),
+])
