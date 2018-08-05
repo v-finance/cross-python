@@ -39,8 +39,8 @@ exec_prefix=	prefix
 
 # Compiler options
 OPT=		['-DNDEBUG', '-g', '-fwrapv', '-O3', '-Wall', '-Wstrict-prototypes',
-                 # for mingw
-                 '-mwindows', '-municode']
+                 '-municode',
+                 ]
 BASECFLAGS=	['-Wno-unused-result', '-Wsign-compare']
 BASECPPFLAGS=	[]
 CONFIGURE_CFLAGS= []	
@@ -145,6 +145,7 @@ have_dict = {
     "HAVE_SYSEXITS_H": conf.CheckHeader('sys/exits.h'),
     "HAVE_SYS_AUDIOIO_H": conf.CheckHeader('sys/audioio.h'),
     "HAVE_SYS_BSDTTY_H": conf.CheckHeader('sys/bsdtty.h'),
+    "HAVE_CRYPT_H": conf.CheckHeader('crypt.h'),
     "HAVE_SYS_DEVPOLL_H": conf.CheckHeader('sys/devpoll.h'),
     # Define to 1 if you have the <> header file, and it defines `DIR'.
     "HAVE_SYS_DIR_H": conf.CheckHeader('sys/dir.h'),
@@ -241,7 +242,8 @@ have_dict = {
     "HAVE_TGAMMA": conf.CheckFunc('tgamma'),
 
     "HAVE_WMEMCMP": conf.CheckFunc('wmemcmp'),
-
+    "HAVE_REALPATH": conf.CheckFunc('realpath'),
+    
     # @todo : more complex checks in configure.ac
     "HAVE_STD_ATOMIC": conf.CheckHeader('stdatomic.h'), # line 5397
     "HAVE_BUILTIN_ATOMIC": conf.CheckHeader('stdatomic.h'),
@@ -284,6 +286,7 @@ for k, v in type_dict.items():
 
 additional_defines_dict = {
     "MS_WINDOWS": conf.CheckHeader('windows.h'),
+    "MAX_PATH": 260,
 }
 
 additional_defines = []
@@ -346,8 +349,8 @@ env.Substfile('pyconfig.h.in', SUBST_DICT=subst_dict)
 static_modules = {
     # This only contains the minimal set of modules required to run the
     # setup.py script in the root of the Python source tree.
-    
-    'posix': 'posixmodule.c',		# posix (UNIX) system calls
+
+    {True:'nt', False:'posix'}[additional_defines_dict['MS_WINDOWS']]: 'posixmodule.c',		# posix (UNIX) system calls
     'errno': 'errnomodule.c',		# posix (UNIX) errno values
     #'pwd': 'pwdmodule.c',			# this is needed to find out the user's home dir
                                     # if $HOME is not set
