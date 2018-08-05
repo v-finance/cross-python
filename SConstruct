@@ -378,6 +378,8 @@ static_modules = {
     
     # debug tool to trace memory blocks allocated by Python
     '_tracemalloc': '_tracemalloc.c hashtable.c',
+
+    'winreg': 'winreg.c'
 }
 
 config_c = env.Substfile(os.path.join('Modules', 'config.c.in'), SUBST_DICT={
@@ -433,6 +435,7 @@ MODOBJS=        [
     os.path.join('Modules/hashtable.c'),
     os.path.join('Modules/symtablemodule.c'),  
     os.path.join('Modules/xxsubtype.c'),
+    os.path.join('PC/winreg.c'),
 ]
 
 MODLIBS=        []
