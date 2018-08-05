@@ -13,6 +13,7 @@ env = Environment(
     AR = "x86_64-w64-mingw32-ar",
     LDMODULE = "x86_64-w64-mingw32-ld",
     LDFLAGS = "--allow-multiple-definition",
+
 )
 
 # === Variables set by configure
@@ -346,7 +347,7 @@ static_modules = {
     # This only contains the minimal set of modules required to run the
     # setup.py script in the root of the Python source tree.
     
-    'posix': 'posixmodule.c',		# posix (UNIX) system calls
+    {True:'nt', False:'posix'}[additional_defines_dict['MS_WINDOWS']]: 'posixmodule.c',		# posix (UNIX) system calls
     'errno': 'errnomodule.c',		# posix (UNIX) errno values
     #'pwd': 'pwdmodule.c',			# this is needed to find out the user's home dir
                                     # if $HOME is not set
@@ -657,6 +658,7 @@ library = env.Library(LIBRARY, LIBRARY_OBJS)
 interpreter_env = env.Clone()
 interpreter_env.Append(LIBPATH = '.')
 interpreter_env.Append(LIBS = [LIBRARY]+LIBS+SYSLIBS+MODLIBS)
+interpreter_env.Append(LINKFLAGS = '-municode') # use wmain instead of main in windows
 
 interpreter_env.Program(BUILDPYTHON, [
     os.path.join('Programs', 'python.c'),
