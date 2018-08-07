@@ -7,7 +7,7 @@ import os
 
 env = Environment(
     PATH = os.environ['PATH'],
-    tools = ['default', 'textfile'],
+    tools = ['default', 'textfile', 'ZipDir'],
     CC   = "x86_64-w64-mingw32-gcc-win32",
     CXX  = "x86_64-w64-mingw32-gcc-win32",
     AR = "x86_64-w64-mingw32-ar",
@@ -347,39 +347,70 @@ static_modules = {
     # This only contains the minimal set of modules required to run the
     # setup.py script in the root of the Python source tree.
     
-    {True:'nt', False:'posix'}[additional_defines_dict['MS_WINDOWS']]: 'posixmodule.c',		# posix (UNIX) system calls
-    'errno': 'errnomodule.c',		# posix (UNIX) errno values
+    {True:'nt',
+    False:'posix'}[additional_defines_dict['MS_WINDOWS']]: [os.path.join('Modules', 'posixmodule.c')],		# posix (UNIX) system calls
+    'errno':  [os.path.join('Modules', 'errnomodule.c')],		# posix (UNIX) errno values
     #'pwd': 'pwdmodule.c',			# this is needed to find out the user's home dir
-                                    # if $HOME is not set
-    '_sre': '_sre.c',			# Fredrik Lundh's new regular expressions
-    '_codecs': '_codecsmodule.c',		# access to the builtin codecs and codec registry
-    '_weakref': '_weakref.c',		# weak references
-    '_functools': '_functoolsmodule.c',   # Tools for working with functions and callable objects
-    '_operator': '_operator.c',	        # operator.add() and similar goodies
-    '_collections': '_collectionsmodule.c', # Container types
-    'itertools': 'itertoolsmodule.c',    # Functions creating iterators for efficient looping
-    'atexit': 'atexitmodule.c',      # Register functions to be run at interpreter-shutdown
-    '_signal': 'signalmodule.c',
-    '_stat': '_stat.c',			# stat.h interface
-    'time': 'timemodule.c',	# -lm # time operations and variables
+                                                # if $HOME is not set
+    '_sre':  [os.path.join('Modules', '_sre.c')],		# Fredrik Lundh's new regular expressions
+    '_codecs':  [os.path.join('Modules', '_codecsmodule.c')],		# access to the builtin codecs and codec registry
+    '_weakref':  [os.path.join('Modules', '_weakref.c')],		# weak references
+    '_functools':  [os.path.join('Modules', '_functoolsmodule.c')],   # Tools for working with functions and callable objects
+    '_operator':  [os.path.join('Modules', '_operator.c')],	        # operator.add() and similar goodies
+    '_collections':  [os.path.join('Modules', '_collectionsmodule.c')], # Container types
+    'itertools':  [os.path.join('Modules', 'itertoolsmodule.c')],    # Functions creating iterators for efficient looping
+    'atexit':  [os.path.join('Modules', 'atexitmodule.c')],     # Register functions to be run at interpreter-shutdown
+    '_signal':  [os.path.join('Modules', 'signalmodule.c')],
+    '_struct':  [os.path.join('Modules', '_struct.c')],
+    '_stat':  [os.path.join('Modules', '_stat.c')],# stat.h interface
+    'time':  [os.path.join('Modules', 'timemodule.c')],	# -lm # time operations and variables
     
     # access to ISO C locale support
-    '_locale': '_localemodule.c',  # -lintl
+    '_locale':  [os.path.join('Modules', '_localemodule.c')],  # -lintl
     
     # Standard I/O baseline
-    '_io': '-I$(srcdir)/Modules/_io _io/_iomodule.c _io/iobase.c _io/fileio.c _io/bytesio.c _io/bufferedio.c _io/textio.c _io/stringio.c',
+    '_io':  [
+        os.path.join('Modules', '_io', '_iomodule.c'),
+        os.path.join('Modules', '_io', 'iobase.c'),
+        os.path.join('Modules', '_io', 'fileio.c'),
+        os.path.join('Modules', '_io', 'bytesio.c'),
+        os.path.join('Modules', '_io', 'bufferedio.c'),
+        os.path.join('Modules', '_io', 'textio.c'),
+        os.path.join('Modules', '_io', 'stringio.c'),
+        ],
     
     # The zipimport module is always imported at startup. Having it as a
     # builtin module avoids some bootstrapping problems and reduces overhead.
-    'zipimport': 'zipimport.c',
+    'zipimport':  [os.path.join('Modules', 'zipimport.c')],
     
     # faulthandler module
-    'faulthandler': 'faulthandler.c',
+    'faulthandler':  [os.path.join('Modules', 'faulthandler.c')],
     
     # debug tool to trace memory blocks allocated by Python
-    '_tracemalloc': '_tracemalloc.c hashtable.c',
+    '_tracemalloc':  [
+        os.path.join('Modules', '_tracemalloc.c'),
+        os.path.join('Modules', 'hashtable.c')
+        ],
 
-    'winreg': 'winreg.c'
+    'winreg': [os.path.join('PC', 'winreg.c')],
+    'zlib':   [
+        os.path.join('Modules', 'zlibmodule.c'),
+        os.path.join('Modules', 'zlib', 'adler32.c'),
+        os.path.join('Modules', 'zlib', 'crc32.c'),
+        os.path.join('Modules', 'zlib', 'deflate.c'),
+        os.path.join('Modules', 'zlib', 'inflate.c'),
+        os.path.join('Modules', 'zlib', 'gzlib.c'),
+        os.path.join('Modules', 'zlib', 'gzclose.c'),
+        os.path.join('Modules', 'zlib', 'gzread.c'),
+        os.path.join('Modules', 'zlib', 'gzwrite.c'),
+        os.path.join('Modules', 'zlib', 'infback.c'),
+        os.path.join('Modules', 'zlib', 'inffast.c'),
+        os.path.join('Modules', 'zlib', 'inftrees.c'),
+        os.path.join('Modules', 'zlib', 'minigzip.c'),
+        os.path.join('Modules', 'zlib', 'trees.c'),
+        os.path.join('Modules', 'zlib', 'uncompr.c'),
+        os.path.join('Modules', 'zlib', 'zutil.c'),
+        ],
 }
 
 config_c = env.Substfile(os.path.join('Modules', 'config.c.in'), SUBST_DICT={
@@ -396,7 +427,7 @@ config_c = env.Substfile(os.path.join('Modules', 'config.c.in'), SUBST_DICT={
 # This part replaces the shell script in Modules/makesetup
 #
 
-env.Append(CPPPATH = ['Include', '.'])
+env.Append(CPPPATH = ['Include', '.', os.path.join('Modules', 'zlib')])
 
 if additional_defines_dict['MS_WINDOWS'] == True:
     env.Append(CPPPATH = ['PC'])
@@ -435,8 +466,10 @@ MODOBJS=        [
     os.path.join('Modules/hashtable.c'),
     os.path.join('Modules/symtablemodule.c'),  
     os.path.join('Modules/xxsubtype.c'),
-    os.path.join('PC/winreg.c'),
 ]
+
+for key, filenames in static_modules.items():
+    MODOBJS.extend(filenames)
 
 MODLIBS=        []
 
@@ -663,7 +696,15 @@ interpreter_env.Append(LIBPATH = '.')
 interpreter_env.Append(LIBS = [LIBRARY]+LIBS+SYSLIBS+MODLIBS)
 interpreter_env.Append(LINKFLAGS = '-municode') # use wmain instead of main in windows
 
-interpreter_env.Program(BUILDPYTHON, [
+interpreter = interpreter_env.Program(BUILDPYTHON, [
     os.path.join('Programs', 'python.c'),
     #os.path.join('PC', 'WinMain.c'),
 ])
+
+# Build the standard library
+
+lib_zip = env.ZipDir("python.zip", ["Lib"])
+
+# Point the interpreter to the standard library
+
+env.Textfile(target='python._pth', source=[str(n) for n in lib_zip] + ['.'])
