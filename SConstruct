@@ -29,7 +29,7 @@ SYSLIBS=	LIBM + LIBC
 
 THREADOBJ=	os.path.join('Python', 'thread.c')
 DYNLOADFILE =   'dynload_stub.c' # dynload_shlib
-BUILDPYTHON=    'python'
+BUILDPYTHON=    'python2'
 LIBRARY=	'python'
 
 # Install prefix for architecture-independent files
@@ -393,6 +393,7 @@ static_modules = {
         ],
 
     'winreg': [os.path.join('PC', 'winreg.c')],
+    '_socket': [os.path.join('Modules', 'socketmodule.c')],
     'zlib':   [
         os.path.join('Modules', 'zlibmodule.c'),
         os.path.join('Modules', 'zlib', 'adler32.c'),
@@ -411,6 +412,63 @@ static_modules = {
         os.path.join('Modules', 'zlib', 'uncompr.c'),
         os.path.join('Modules', 'zlib', 'zutil.c'),
         ],
+# Modules that should always be present (non UNIX dependent):
+
+    'array':  [os.path.join('Modules', 'arraymodule.c')],	# array objects
+    'cmath':  [
+        os.path.join('Modules', 'cmathmodule.c'),
+        os.path.join('Modules', '_math.c')
+        ], # -lm # complex math library functions
+    'math':  [
+        os.path.join('Modules', 'mathmodule.c'),
+        os.path.join('Modules', '_math.c')
+        ], # -lm # math library functions, e.g. sin()
+    '_struct':  [os.path.join('Modules', '_struct.c')],	# binary structure packing/unpacking
+    '_weakref':  [os.path.join('Modules', '_weakref.c')],	# basic weak reference support
+#    '_testcapi':  [os.path.join('Modules', '_testcapimodule.c')],    # Python C API test module
+    '_random':  [os.path.join('Modules', '_randommodule.c')],	# Random number generator
+#_elementtree -I$(srcdir)/Modules/expat -DHAVE_EXPAT_CONFIG_H -DUSE_PYEXPAT_CAPI _elementtree.c	# elementtree accelerator
+#    '_pickle':  [os.path.join('Modules', '_pickle.c')],	# pickle accelerator
+    '_datetime':  [os.path.join('Modules', '_datetimemodule.c')],	# datetime accelerator
+    '_bisect':  [os.path.join('Modules', '_bisectmodule.c')],	# Bisection algorithms
+    '_heapq':  [os.path.join('Modules', '_heapqmodule.c')],	# Heap queue algorithm
+    '_asyncio':  [os.path.join('Modules', '_asynciomodule.c')],  # Fast asyncio Future
+
+    'unicodedata':  [os.path.join('Modules', 'unicodedata.c')],    # static Unicode character database
+
+
+# Modules with some UNIX dependencies -- on by default:
+# (If you have a really backward UNIX, select and socket may not be
+# supported...)
+
+#fcntl fcntlmodule.c	# fcntl(2) and ioctl(2)
+#spwd spwdmodule.c		# spwd(3)
+#grp grpmodule.c		# grp(3)
+    'select':  [os.path.join('Modules', 'selectmodule.c')],	# select(2); not on ancient System V
+
+# Helper module for various ascii-encoders
+    'binascii':  [os.path.join('Modules', 'binascii.c')],
+
+# Fred Drake's interface to the Python parser
+    'parser':  [os.path.join('Modules', 'parsermodule.c')],
+
+# The crypt module is now disabled by default because it breaks builds
+# on many systems (where -lcrypt is needed), e.g. Linux (I believe).
+#
+# First, look at Setup.config; configure may have set this for you.
+
+#_crypt _cryptmodule.c # -lcrypt	# crypt(3); needs -lcrypt on some systems
+
+
+# Some more UNIX dependent modules -- off by default, since these
+# are not supported by all UNIX systems:
+
+#nis nismodule.c -lnsl	# Sun yellow pages -- not everywhere
+#termios termios.c	# Steen Lumholt's termios module
+#resource resource.c	# Jeremy Hylton's rlimit interface
+
+#    '_posixsubprocess':  [os.path.join('Modules', '_posixsubprocess.c')],   # POSIX subprocess module helper
+
 }
 
 config_c = env.Substfile(os.path.join('Modules', 'config.c.in'), SUBST_DICT={
