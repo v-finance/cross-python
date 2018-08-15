@@ -4,6 +4,7 @@
 
 import os.path
 import os
+import re
 
 env = Environment(
     PATH = os.environ['PATH'],
@@ -16,9 +17,20 @@ env = Environment(
 
 )
 
+version_re = re.compile("m4_define\(PYTHON_VERSION, (.*)\)")
+configure_ac = env.File('configure.ac').get_contents()
+for line in configure_ac.split('\n'):
+    match = version_re.match(line)
+    if match is not None:
+        VERSION = match.group(1)
+        print('Python version {} found'.format(VERSION))
+        break
+else:
+    raise Exception('No Python version found in srcdir')
+
 # === Variables set by configure
 
-VERSION=        '3.6'
+
 SOABI=		'cpython-36m-x86_64-linux-gnu'
 VPATH=          'sourcedir'
 
