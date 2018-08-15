@@ -218,6 +218,9 @@ have_dict = {
     "HAVE_WCHAR_H": conf.CheckHeader('wchar.h'),
     "HAVE_SIGNAL_H": conf.CheckHeader('signal.h'),
     "HAVE_UTIME_H": conf.CheckHeader('utime.h'),
+    "HAVE_DIRECT_H": conf.CheckHeader('direct.h'),
+    "HAVE_IO_H": conf.CheckHeader('io.h'),
+    "HAVE_PROCESS_H": conf.CheckHeader('process.h'),
 
     "HAVE_TIMEGM": conf.CheckFunc('timegm'),
     "HAVE_TIMES": conf.CheckFunc('times'),
@@ -242,6 +245,18 @@ have_dict = {
     "HAVE_TGAMMA": conf.CheckFunc('tgamma'),
 
     "HAVE_WMEMCMP": conf.CheckFunc('wmemcmp'),
+    
+    "HAVE_GETPPID": conf.CheckFunc('getppid') or conf.CheckFunc('getpid'),
+    "HAVE_GETLOGIN": conf.CheckFunc('getlogin'),
+    "HAVE_SPAWNV": conf.CheckFunc('spawnv'),
+    "HAVE_EXECV": conf.CheckFunc('execv'),
+    "HAVE_WSPAWNV": conf.CheckFunc('_wspawnv'),
+    "HAVE_WEXECV": conf.CheckFunc('_wexecv'),
+    "HAVE_PIPE": conf.CheckFunc('CreatePipe'),
+    "HAVE_SYSTEM": conf.CheckFunc('system'),
+    "HAVE_CWAIT": conf.CheckFunc('cwait'),
+    "HAVE_FSYNC": conf.CheckFunc('fsync') or conf.CheckFunc('_commit'),
+    "HAVE_COMMIT": conf.CheckFunc('_commit'),
 
     # @todo : more complex checks in configure.ac
     "HAVE_STD_ATOMIC": conf.CheckHeader('stdatomic.h'), # line 5397
@@ -346,9 +361,6 @@ env.Substfile('pyconfig.h.in', SUBST_DICT=subst_dict)
 static_modules = {
     # This only contains the minimal set of modules required to run the
     # setup.py script in the root of the Python source tree.
-    
-    {True:'nt',
-    False:'posix'}[additional_defines_dict['MS_WINDOWS']]: [os.path.join('Modules', 'posixmodule.c')],		# posix (UNIX) system calls
     'errno':  [os.path.join('Modules', 'errnomodule.c')],		# posix (UNIX) errno values
     #'pwd': 'pwdmodule.c',			# this is needed to find out the user's home dir
                                                 # if $HOME is not set
@@ -471,6 +483,13 @@ static_modules = {
 
 }
 
+# posix (UNIX) system calls
+
+if additional_defines_dict['MS_WINDOWS']:
+    static_modules['nt'] = env.StaticObject(os.path.join('Modules', 'posixmodule.c'), CPPDEFINES = '-D_MSC_VER')
+else:
+    static_modules['posix'] = env.StaticObject(os.path.join('Modules', 'posixmodule.c'))
+    
 config_c = env.Substfile(os.path.join('Modules', 'config.c.in'), SUBST_DICT={
     # keys in the dict act as regexp
     "/\* -- ADDMODULE MARKER 1 -- \*/": "\n".join([
@@ -495,7 +514,6 @@ if additional_defines_dict['MS_WINDOWS'] == True:
 MODNAMES=       []
 MODOBJS=        [
     #os.path.join('Modules', '_threadmodule.c'),
-    os.path.join('Modules', 'posixmodule.c'),
     os.path.join('Modules/errnomodule.c'),
     #os.path.join('Modules/pwdmodule.c'),
     os.path.join('Modules/_sre.c'),
