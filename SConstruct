@@ -14,7 +14,6 @@ env = Environment(
     AR = "x86_64-w64-mingw32-ar",
     LDMODULE = "x86_64-w64-mingw32-ld",
     LDFLAGS = "--allow-multiple-definition",
-
 )
 
 version_re = re.compile("m4_define\(PYTHON_VERSION, (.*)\)")
@@ -41,7 +40,7 @@ SYSLIBS=	LIBM + LIBC
 
 THREADOBJ=	os.path.join('Python', 'thread.c')
 DYNLOADFILE =   'dynload_stub.c' # dynload_shlib
-BUILDPYTHON=    'python2'
+BUILDPYTHON=    'python'
 LIBRARY=	'python'
 
 # Install prefix for architecture-independent files
@@ -257,6 +256,7 @@ have_dict = {
     "HAVE_TGAMMA": conf.CheckFunc('tgamma'),
 
     "HAVE_WMEMCMP": conf.CheckFunc('wmemcmp'),
+    "HAVE_REALPATH": conf.CheckFunc('realpath'),
     
     "HAVE_GETPPID": conf.CheckFunc('getppid') or conf.CheckFunc('getpid'),
     "HAVE_GETLOGIN": conf.CheckFunc('getlogin'),
@@ -279,6 +279,7 @@ have_dict = {
     "TIME_WITH_SYS_TIME": conf.CheckHeader('time.h') and conf.CheckHeader('sys/time.h'),
 
     "HAVE_DYNAMIC_LOADING": 0,
+    "_PYTHONFRAMEWORK": '""',
 
 }
 
@@ -311,6 +312,7 @@ for k, v in type_dict.items():
 
 additional_defines_dict = {
     "MS_WINDOWS": conf.CheckHeader('windows.h'),
+    "MAX_PATH": 260,
 }
 
 additional_defines = []
@@ -650,9 +652,13 @@ PYTHON_OBJS = [
     os.path.join('Python', 'Python-ast.c'),
     os.path.join('Python', 'asdl.c'),
     os.path.join('Python', 'ast.c'),
+    os.path.join('Python', 'ast_opt.c'),
+    os.path.join('Python', 'ast_unparse.c'),
+    os.path.join('Python', 'bootstrap_hash.c'),
     os.path.join('Python', 'bltinmodule.c'),
     os.path.join('Python', 'ceval.c'),
     os.path.join('Python', 'compile.c'),
+    os.path.join('Python', 'context.c'),
     os.path.join('Python', 'codecs.c'),
     os.path.join('Python', 'dynamic_annotations.c'),
     os.path.join('Python', 'errors.c'),
@@ -664,12 +670,14 @@ PYTHON_OBJS = [
     os.path.join('Python', 'getplatform.c'),
     os.path.join('Python', 'getversion.c'),
     os.path.join('Python', 'graminit.c'),
+    os.path.join('Python', 'hamt.c'),
     os.path.join('Python', 'import.c'),
     os.path.join('Python', 'importdl.c'),
     os.path.join('Python', 'marshal.c'),
     os.path.join('Python', 'modsupport.c'),
     os.path.join('Python', 'mystrtoul.c'),
     os.path.join('Python', 'mysnprintf.c'),
+    os.path.join('Python', 'pathconfig.c'),
     os.path.join('Python', 'peephole.c'),
     os.path.join('Python', 'pyarena.c'),
     os.path.join('Python', 'pyctype.c'),
@@ -708,6 +716,7 @@ OBJECT_OBJS = [
     os.path.join('Objects', 'bytes_methods.c'),
     os.path.join('Objects', 'bytearrayobject.c'),
     os.path.join('Objects', 'bytesobject.c'),
+    os.path.join('Objects', 'call.c'),
     os.path.join('Objects', 'cellobject.c'),
     os.path.join('Objects', 'classobject.c'),
     os.path.join('Objects', 'codeobject.c'),
@@ -788,11 +797,3 @@ interpreter = interpreter_env.Program(BUILDPYTHON, [
     os.path.join('Programs', 'python.c'),
     #os.path.join('PC', 'WinMain.c'),
 ])
-
-# Build the standard library
-
-lib_zip = env.ZipDir("python.zip", ["Lib"])
-
-# Point the interpreter to the standard library
-
-env.Textfile(target='python._pth', source=[str(n) for n in lib_zip] + ['.'])
