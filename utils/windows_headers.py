@@ -17,19 +17,33 @@ if not len(sys.argv[1]):
 print('looking in {0}'.format(sys.argv[1]))
 
 #
-# Create list of headers
+# Create list of windows headers
 #
 
-headers = []
+headers = set()
 for p in glob.glob(os.path.join(sys.argv[1], '**', '*.h'), recursive=True):
     basename = os.path.basename(p)
-    headers.append(basename)
+    headers.add(basename.lower())
 
 if 'windows.h' in headers:
     print('windows headers found')
 else:
     raise Exception('This path does not contain windows headers')
 
+print(len(headers), 'windows headers found')
+
+#
+# Exclude standard headers
+#
+
+for p in glob.glob(os.path.join('/usr/include/', '**', '*.h'), recursive=True):
+    basename = os.path.basename(p)
+    headers.discard(basename.lower())
+
+print(len(headers), 'after removing standard headers :')
+
+for header in sorted(list(headers)):
+    print(header)
 #
 # Create list of sources
 #
@@ -51,10 +65,18 @@ else:
 # Validate sources
 #
 
+total_count = 0
 for source in sources:
     source_text = open(source).readlines()
-    include_lines = [(i, line) for i, line in enumerate(source_text) if 'include' in line]
+    include_lines = [(i, line) for i, line in enumerate(source_text) if '#include' in line]
+    header_count = 0
     for header in headers:
         for i, line in include_lines:
-            if (header in line.lower()) and (header not in line):
-                print(source, header, i+1, line)
+            if header in line.lower():
+                header_count += 1
+                if header not in line:
+                    print(source, header, i+1, line)
+    total_count += header_count
+    if header_count > 0:
+        print(source, ':', header_count)
+print('total : ', total_count)
