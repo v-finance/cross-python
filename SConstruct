@@ -822,3 +822,11 @@ interpreter = interpreter_env.Program(BUILDPYTHON, [
     library, zlib_library,
     #os.path.join('PC', 'WinMain.c'),
 ])
+
+# Build the standard library
+
+lib_zip = env.ZipDir("python.zip", ["Lib"])
+
+# Point the interpreter to the standard library
+
+env.Textfile(target='python._pth', source=[str(n) for n in lib_zip] + ['.'])
