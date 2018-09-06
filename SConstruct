@@ -14,6 +14,7 @@ env = Environment(
     AR = "x86_64-w64-mingw32-ar",
     LDMODULE = "x86_64-w64-mingw32-ld",
     LDFLAGS = "--allow-multiple-definition",
+    CCFLAGS = ['-g'] # debug info
 )
 
 version_re = re.compile("m4_define\(PYTHON_VERSION, (.*)\)")
