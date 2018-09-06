@@ -41,7 +41,6 @@ zlib_sources = [
     'infback.c',
     'inffast.c',
     'inftrees.c',
-    'minigzip.c',
     'trees.c',
     'uncompr.c',
     'zutil.c',
@@ -56,7 +55,7 @@ zlib_archive = env.URLDownload('zlib.tar.gz', "https://zlib.net/{}.tar.gz".forma
 
 # Unpack dependencies
 
-zlib_source = env.Unpack(os.path.join('dependencies', 'zlib'), zlib_archive, UNPACKLIST=zlib_sources)
+zlib_source = env.Unpack(os.path.join('dependencies', 'zlib'), zlib_archive, UNPACKLIST=[os.path.join(zlib_name, source) for source in zlib_sources])
 
 env.Append(CPPPATH = [zlib_name])
 
@@ -681,6 +680,7 @@ PYTHON_OBJS = [
     os.path.join('Python', 'ast_unparse.c'),
     os.path.join('Python', 'bootstrap_hash.c'),
     os.path.join('Python', 'bltinmodule.c'),
+    os.path.join('Python', 'coreconfig.c'),
     os.path.join('Python', 'ceval.c'),
     os.path.join('Python', 'compile.c'),
     os.path.join('Python', 'context.c'),
@@ -713,7 +713,6 @@ PYTHON_OBJS = [
     os.path.join('Python', 'pystate.c'),
     os.path.join('Python', 'pythonrun.c'),
     os.path.join('Python', 'pytime.c'),
-    os.path.join('Python', 'random.c'),
     os.path.join('Python', 'structmember.c'),
     os.path.join('Python', 'symtable.c'),
     os.path.join('Python', 'sysmodule.c'),
@@ -820,5 +819,6 @@ interpreter_env.Append(LINKFLAGS = '-municode') # use wmain instead of main in w
 
 interpreter = interpreter_env.Program(BUILDPYTHON, [
     os.path.join('Programs', 'python.c'),
+    library, zlib_library,
     #os.path.join('PC', 'WinMain.c'),
 ])
