@@ -8,7 +8,7 @@ import re
 
 env = Environment(
     PATH = os.environ['PATH'],
-    tools = ['default', 'textfile', 'ZipDir'],
+    tools = ['default', 'textfile', 'ZipDir', 'URLDownload', 'Unpack'],
     CC   = "x86_64-w64-mingw32-gcc-win32",
     CXX  = "x86_64-w64-mingw32-gcc-win32",
     AR = "x86_64-w64-mingw32-ar",
@@ -26,6 +26,45 @@ for line in configure_ac.split('\n'):
         break
 else:
     raise Exception('No Python version found in srcdir')
+
+# External files needed
+
+zlib_sources = [
+    'adler32.c',
+    'crc32.c',
+    'deflate.c',
+    'inflate.c',
+    'gzlib.c',
+    'gzclose.c',
+    'gzread.c',
+    'gzwrite.c',
+    'infback.c',
+    'inffast.c',
+    'inftrees.c',
+    'minigzip.c',
+    'trees.c',
+    'uncompr.c',
+    'zutil.c',
+    'zlib.h',
+]
+
+
+# Download dependencies
+
+zlib_name = 'zlib-1.2.11'
+zlib_archive = env.URLDownload('zlib.tar.gz', "https://zlib.net/{}.tar.gz".format(zlib_name))
+
+# Unpack dependencies
+
+zlib_source = env.Unpack(os.path.join('dependencies', 'zlib'), zlib_archive, UNPACKLIST=zlib_sources)
+
+env.Append(CPPPATH = [zlib_name])
+
+# Build dependencies
+
+zlib_library = env.Library(
+'zlib', zlib_source
+)
 
 # === Variables set by configure
 
@@ -422,21 +461,7 @@ static_modules = {
     '_socket': [os.path.join('Modules', 'socketmodule.c')],
     'zlib':   [
         os.path.join('Modules', 'zlibmodule.c'),
-        os.path.join('Modules', 'zlib', 'adler32.c'),
-        os.path.join('Modules', 'zlib', 'crc32.c'),
-        os.path.join('Modules', 'zlib', 'deflate.c'),
-        os.path.join('Modules', 'zlib', 'inflate.c'),
-        os.path.join('Modules', 'zlib', 'gzlib.c'),
-        os.path.join('Modules', 'zlib', 'gzclose.c'),
-        os.path.join('Modules', 'zlib', 'gzread.c'),
-        os.path.join('Modules', 'zlib', 'gzwrite.c'),
-        os.path.join('Modules', 'zlib', 'infback.c'),
-        os.path.join('Modules', 'zlib', 'inffast.c'),
-        os.path.join('Modules', 'zlib', 'inftrees.c'),
-        os.path.join('Modules', 'zlib', 'minigzip.c'),
-        os.path.join('Modules', 'zlib', 'trees.c'),
-        os.path.join('Modules', 'zlib', 'uncompr.c'),
-        os.path.join('Modules', 'zlib', 'zutil.c'),
+        zlib_library
         ],
 # Modules that should always be present (non UNIX dependent):
 
@@ -517,8 +542,8 @@ config_c = env.Substfile(os.path.join('Modules', 'config.c.in'), SUBST_DICT={
 #
 # This part replaces the shell script in Modules/makesetup
 #
+env.Append(CPPPATH = ['Include', '.',])
 
-env.Append(CPPPATH = ['Include', '.', os.path.join('Modules', 'zlib')])
 
 if additional_defines_dict['MS_WINDOWS'] == True:
     env.Append(CPPPATH = ['PC'])
