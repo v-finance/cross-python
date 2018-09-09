@@ -486,6 +486,7 @@ static_modules = {
     '_asyncio':  [os.path.join('Modules', '_asynciomodule.c')],  # Fast asyncio Future
 
     'unicodedata':  [os.path.join('Modules', 'unicodedata.c')],    # static Unicode character database
+    '_thread':      [os.path.join('Modules', '_threadmodule.c')],
 
 
 # Modules with some UNIX dependencies -- on by default:
@@ -552,7 +553,6 @@ if additional_defines_dict['MS_WINDOWS'] == True:
 
 MODNAMES=       []
 MODOBJS=        [
-    #os.path.join('Modules', '_threadmodule.c'),
     os.path.join('Modules/errnomodule.c'),
     #os.path.join('Modules/pwdmodule.c'),
     os.path.join('Modules/_sre.c'),
