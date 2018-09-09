@@ -14,7 +14,6 @@ env = Environment(
     AR = "x86_64-w64-mingw32-ar",
     LDMODULE = "x86_64-w64-mingw32-ld",
     LDFLAGS = "--allow-multiple-definition",
-    CCFLAGS = ['-g'] # debug info
 )
 
 version_re = re.compile("m4_define\(PYTHON_VERSION, (.*)\)")
@@ -72,7 +71,7 @@ zlib_library = env.Library(
 SOABI=		'cpython-36m-x86_64-linux-gnu'
 VPATH=          'sourcedir'
 
-LIBS=		['pthread', 'version', 'mingw32', 'ws2_32', 'shlwapi']# 'dl', 'util',]
+LIBS=		['pthread', 'version', 'mingw32', 'ws2_32', 'shlwapi', 'winpthread']# 'dl', 'util',]
 LIBM=		['m']
 LIBC=		[]
 SYSLIBS=	LIBM + LIBC
@@ -89,7 +88,8 @@ prefix=		'.'
 exec_prefix=	prefix
 
 # Compiler options
-OPT=		['-DNDEBUG', '-g', '-fwrapv', '-O3', '-Wall', '-Wstrict-prototypes',
+# -gstabs : to be able to debug using wine
+OPT=		['-DNDEBUG', '-gstabs', '-fwrapv', '-O3', '-Wall', '-Wstrict-prototypes',
                  # for mingw
                  '-mwindows', '-municode']
 BASECFLAGS=	['-Wno-unused-result', '-Wsign-compare']
@@ -150,6 +150,7 @@ defines = {
     "_DARWIN_C_SOURCE": "1", # Define on Darwin to activate all library features])
     
     #"PY_FORMAT_SIZE_T": "z",
+    "_PYTHONFRAMEWORK": '""',
 
    
 }
@@ -318,7 +319,6 @@ have_dict = {
     "TIME_WITH_SYS_TIME": conf.CheckHeader('time.h') and conf.CheckHeader('sys/time.h'),
 
     "HAVE_DYNAMIC_LOADING": 0,
-    "_PYTHONFRAMEWORK": '""',
 
 }
 
@@ -590,7 +590,7 @@ MODLIBS=        []
 
 # Scons Defines
 
-PYTHONPATH=''
+PYTHONPATH='Lib'
 
 env.Append(CPPDEFINES = '-DPYTHONPATH=\'"{0}"\''.format(PYTHONPATH))
 env.Append(CPPDEFINES = '-DPREFIX=\'"{0}"\''.format(prefix))
@@ -617,6 +617,7 @@ MODULE_OBJS = [
 
 if additional_defines_dict['MS_WINDOWS'] == True:
     MODULE_OBJS.append(os.path.join('PC', 'getpathp.c'))
+    MODULE_OBJS.append(os.path.join('PC', 'dl_nt.c'))
 else:
     MODULE_OBJS.append(os.path.join('Modules', 'getpath.c'))
 
@@ -731,6 +732,9 @@ PYTHON_OBJS = [
     THREADOBJ,
     #os.path.join('$(DTRACE_OBJS'),
 ]
+
+if additional_defines_dict['MS_WINDOWS'] == True:
+    PYTHON_OBJS.append(os.path.join('Python', 'dynload_win.c'))
 
 ##########################################################################
 # Objects
