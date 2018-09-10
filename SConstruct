@@ -487,6 +487,8 @@ static_modules = {
 
     'unicodedata':  [os.path.join('Modules', 'unicodedata.c')],    # static Unicode character database
     '_thread':      [os.path.join('Modules', '_threadmodule.c')],
+    '_contextvars': [os.path.join('Modules', '_contextvarsmodule.c')],
+    #'_overlapped':  [os.path.join('Modules', 'overlapped.c')],
 
 
 # Modules with some UNIX dependencies -- on by default:
@@ -527,6 +529,8 @@ static_modules = {
 
 if additional_defines_dict['MS_WINDOWS']:
     static_modules['nt'] = env.StaticObject(os.path.join('Modules', 'posixmodule.c'), CPPDEFINES = '-D_MSC_VER')
+    static_modules['msvcrt'] = env.StaticObject(os.path.join('PC', 'msvcrtmodule.c'))
+    static_modules['_winapi'] = env.StaticObject(os.path.join('Modules', '_winapi.c'))
 else:
     static_modules['posix'] = env.StaticObject(os.path.join('Modules', 'posixmodule.c'))
     
@@ -537,6 +541,9 @@ config_c = env.Substfile(os.path.join('Modules', 'config.c.in'), SUBST_DICT={
     "/\* -- ADDMODULE MARKER 2 -- \*/": "\n".join([
         '{' + '"{0}", PyInit_{0}'.format(module_name) + '},' for module_name in static_modules.keys()])
 })[0]
+
+if additional_defines_dict["MS_WINDOWS"]:
+    MACHDEP = "win32"
 
 #
 # Replacement of makesetup
@@ -694,7 +701,7 @@ PYTHON_OBJS = [
     os.path.join('Python', 'getargs.c'),
     os.path.join('Python', 'getcompiler.c'),
     os.path.join('Python', 'getcopyright.c'),
-    os.path.join('Python', 'getplatform.c'),
+    env.StaticObject(os.path.join('Python', 'getplatform.c'), CPPDEFINES = '-DPLATFORM=\'"{0}"\''.format(MACHDEP)),
     os.path.join('Python', 'getversion.c'),
     os.path.join('Python', 'graminit.c'),
     os.path.join('Python', 'hamt.c'),
