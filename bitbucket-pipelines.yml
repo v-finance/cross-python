@@ -10,4 +10,8 @@ pipelines:
     - step:
         script:
           # install deps
-          - apt-get update && apt-get install -y scons wine mingw-w64
+          - apt-get update && apt-get install -y scons wine mingw-w64 git
+          # prepare cpython code
+          - git clone https://github.com/python/cpython.git cpython
+          # runs scons
+          - scons --srcdir=cpython
