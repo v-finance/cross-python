@@ -47,23 +47,39 @@ zlib_sources = [
     'zlib.h',
 ]
 
+libffi_headers = [
+    os.path.join('include', 'ffi.h.in'),
+    'fficonfig.h.in',
+    os.path.join('include', 'ffi_common.h'),
+]
+
+libffi_sources = [
+    os.path.join('src', 'types.c'),
+    os.path.join('src', 'closures.c'),
+    os.path.join('src', 'raw_api.c'),
+    os.path.join('src', 'prep_cif.c'),
+    os.path.join('src', 'java_raw_api.c'),
+    os.path.join('src', 'dlmalloc.c'),
+    os.path.join('src', 'debug.c'),
+]
 
 # Download dependencies
 
 zlib_name = 'zlib-1.2.11'
 zlib_archive = env.URLDownload('zlib.tar.gz', "https://zlib.net/{}.tar.gz".format(zlib_name))
 
+libffi_name = 'libffi-3.2.1'
+libffi_archive = env.URLDownload('libffi.tar.gz', "ftp://sourceware.org/pub/libffi/{}.tar.gz".format(libffi_name))
+
 # Unpack dependencies
 
 zlib_source = env.Unpack(os.path.join('dependencies', 'zlib'), zlib_archive, UNPACKLIST=[os.path.join(zlib_name, source) for source in zlib_sources])
-
 env.Append(CPPPATH = [zlib_name])
 
-# Build dependencies
+libffi_header = env.Unpack(os.path.join('dependencies', 'libffi'), libffi_archive, UNPACKLIST=[os.path.join(libffi_name, source) for source in libffi_headers])
+libffi_source = env.Unpack(os.path.join('dependencies', 'libffi'), libffi_archive, UNPACKLIST=[os.path.join(libffi_name, source) for source in libffi_sources])
 
-zlib_library = env.Library(
-'zlib', zlib_source
-)
+
 
 # === Variables set by configure
 
@@ -403,6 +419,33 @@ subst_dict["#define Py_PYCONFIG_H"] = "\n".join(["#define Py_PYCONFIG_H"] + addi
 
 env.Substfile('pyconfig.h.in', SUBST_DICT=subst_dict)
 
+# Build dependencies
+
+
+
+
+
+ffi_header = env.Substfile(libffi_header[0], SUBST_DICT={
+    '@TARGET@': 'X86_32',
+    '@HAVE_LONG_DOUBLE_VARIANT@':0,
+    '@FFI_EXEC_TRAMPOLINE_TABLE@':0,
+    '@HAVE_LONG_DOUBLE@': 1 if (typesize_dict['SIZEOF_LONG_DOUBLE'] and (typesize_dict['SIZEOF_LONG_DOUBLE']!=typesize_dict['SIZEOF_DOUBLE'])) else 0,
+})
+env.Append(CPPPATH = [
+    libffi_name,
+    os.path.join(libffi_name, 'include'),
+    os.path.join(libffi_name, 'src', 'x86'),
+])
+ffi_config_header = env.Substfile(libffi_header[1], SUBST_DICT=subst_dict)
+
+zlib_library = env.Library(
+'zlib', zlib_source
+)
+
+libffi_library = env.Library(
+'libffi', libffi_source
+)
+
 #
 # replacement of Setup.dist
 #
@@ -489,6 +532,15 @@ static_modules = {
     '_thread':      [os.path.join('Modules', '_threadmodule.c')],
     '_contextvars': [os.path.join('Modules', '_contextvarsmodule.c')],
     #'_overlapped':  [os.path.join('Modules', 'overlapped.c')],
+    #'_ctypes': [
+        #libffi_library,
+        #env.StaticObject(os.path.join('Modules', '_ctypes', '_ctypes.c'), CPPDEFINES = '-DMS_WIN32'),
+        #os.path.join('Modules', '_ctypes', 'callbacks.c'),
+        #os.path.join('Modules', '_ctypes', 'callproc.c'),
+        #os.path.join('Modules', '_ctypes', 'stgdict.c'),
+        #os.path.join('Modules', '_ctypes', 'cfield.c'),
+
+    #],
 
 
 # Modules with some UNIX dependencies -- on by default:
