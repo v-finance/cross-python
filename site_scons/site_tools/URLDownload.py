@@ -1,97 +1,67 @@
-#!python 
-import urllib2, urlparse
-import SCons.Builder, SCons.Node, SCons.Errors
+"""
+A SCons extension to download a url
+"""
+
+import os,sys
+import urllib2
+   
+from SCons.Script import *
+import SCons.Builder
+
+def URLDownloadString(target, source, env):
+   return 'URLDownload(%s,...)' % str(target[0])
+
+def URLDownload(target, source, env):
+   """zip archive builder"""
+
+   print('download', target, source)
+   
+   for s in source:
+      source_path = env.GetBuildPath(s)
+      with open(source_path, 'r') as source_file:
+         url = source_file.read()
+      
+      sys.stderr.write("URLDownload: " + url + "\n")
+      
+      try :
+         stream = urllib2.urlopen(url)
+         file   = open( str(target[0]), "wb" )
+         file.write(stream.read())
+         file.close()
+         stream.close()
+      except Exception, e:
+         raise SCons.Errors.StopError( e )
+
+def emitter(target, source, env):
+   print('emitter', target, source)
+   new_source = []
+   for s in source:
+      new_source = str(s).split('/')[-1] + '.url'
+      new_source_path = env.GetBuildPath(new_source)
+      print  new_source_path
+      old_url = ''
+      if os.path.exists(new_source_path):
+         with open(new_source_path, 'r') as new_source_file:
+            old_url = new_source_file.read()
+      if old_url != str(s):
+         with open(new_source_path, 'w') as new_source_file:
+            new_source_file.write(str(s))       
+   return target, new_source
+
+def generate(env):
+   """
+   Add builders and construction variables for the URLDownload builder.
+   """
+
+   env.Append(BUILDERS = {
+      'URLDownload': env.Builder(
+         action = SCons.Action.Action(URLDownload, URLDownloadString),
+         emitter = emitter,
+         #target_factory = env.fs.Entry,
+         source_factory = SCons.Node.Python.Value,
+      ),
+   })
 
 
-# define an own node, for checking the data behind the URL,
-# we must download only than, if the data is changed, the
-# node derivates from the Python.Value node
-class URLNode(SCons.Node.Python.Value) :
-
-    # overload the get_csig (copy the source from the
-    # Python.Value node and append the data of the URL header
-    def get_csig(self, calc=None): 
-        try: 
-            return self.ninfo.csig 
-        except AttributeError: 
-            pass 
-        
-        # read URL header information
-        try :
-            response = urllib2.urlopen( str(self.value) ).info()
-        except Exception, e :
-            raise SCons.Errors.StopError( e )
-            
-        contents = ""
-        # append the data from the URL header if exists
-        # otherwise the returning data is equal to the Python.Value node
-        if "Last-Modified" in response :
-            contents = contents + response["Last-Modified"]
-        if "Content-Length" in response :
-            contents = contents + response["Content-Length"]
-        if not contents :
-            contents = self.get_contents() 
-        self.get_ninfo().csig = contents 
-        return contents 
-
-
-# creates the downloading output message
-# @param s original message
-# @param target target name
-# @param source source name
-# @param env environment object
-def __message( s, target, source, env ) :
-    print "downloading [%s] to [%s] ..." % (source[0], target[0])
-
-
-
-# the download function, which reads the data from the URL
-# and writes it down to the file
-# @param target target file on the local drive
-# @param source URL
-# @param env environment object
-def __action( target, source, env ) :
-    try :
-        stream = urllib2.urlopen( str(source[0]) )
-        file   = open( str(target[0]), "wb" )
-        file.write(stream.read())
-        file.close()
-        stream.close()
-    except Exception, e :
-        raise SCons.Errors.StopError( e )
-
-
-# defines the emitter of the builder
-# @param target target file on the local drive
-# @param source URL
-# @param env environment object
-def __emitter( target, source, env ) :
-    # we need a temporary file, because the dependency graph
-    # of Scons need a physical existing file - so we prepare it
-    target[0].prepare()
-
-    if not env.get("URLDOWNLOAD_USEURLFILENAME", False) :
-        return target, source
-
-    try :
-        url = urlparse.urlparse( str(source[0]) )
-    except Exception, e :
-        raise SCons.Errors.StopError( e )
-    return url.path.split("/")[-1], source
-
-
-
-# generate function, that adds the builder to the environment,
-# the value "DOWNLOAD_USEFILENAME" replaces the target name with
-# the filename of the URL
-# @param env environment object
-def generate( env ) :
-    env["BUILDERS"]["URLDownload"] = SCons.Builder.Builder( action = __action,  emitter = __emitter,  target_factory = SCons.Node.FS.File,  source_factory = URLNode,  single_source = True,  PRINT_CMD_LINE_FUNC = __message )
-    env.Replace(URLDOWNLOAD_USEURLFILENAME =  True )
-
-
-# existing function of the builder
-# @param env environment object
-# @return true
-def exists(env) :
-    return 1
+def exists(env):
+   return True

@@ -61,23 +61,26 @@ libffi_sources = [
     os.path.join('src', 'java_raw_api.c'),
     os.path.join('src', 'dlmalloc.c'),
     os.path.join('src', 'debug.c'),
+    os.path.join('src', 'x86', 'ffi.c'),
+    os.path.join('src', 'x86', 'win32.S'),
 ]
 
 # Download dependencies
 
-zlib_name = 'zlib-1.2.11'
-zlib_archive = env.URLDownload('zlib.tar.gz', "https://zlib.net/{}.tar.gz".format(zlib_name))
+zlib_archive = env.URLDownload('zlib.tar.gz', 'https://zlib.net/zlib-1.2.11.tar.gz')
 
-libffi_name = 'libffi-3.2.1'
-libffi_archive = env.URLDownload('libffi.tar.gz', "ftp://sourceware.org/pub/libffi/{}.tar.gz".format(libffi_name))
+#libffi_name = 'libffi-3.2.1'
+#libffi_archive = env.URLDownload('libffi.tar.gz', "ftp://sourceware.org/pub/libffi/{}.tar.gz".format(libffi_name))
 
 # Unpack dependencies
 
-zlib_source = env.Unpack(os.path.join('dependencies', 'zlib'), zlib_archive, UNPACKLIST=[os.path.join(zlib_name, source) for source in zlib_sources])
-env.Append(CPPPATH = [zlib_name])
 
-libffi_header = env.Unpack(os.path.join('dependencies', 'libffi'), libffi_archive, UNPACKLIST=[os.path.join(libffi_name, source) for source in libffi_headers])
-libffi_source = env.Unpack(os.path.join('dependencies', 'libffi'), libffi_archive, UNPACKLIST=[os.path.join(libffi_name, source) for source in libffi_sources])
+zlib_source = env.Unpack(Dir('zlib_src'), zlib_archive)
+print('zlib source', zlib_source)
+env.Append(CPPPATH = zlib_source)
+
+#libffi_header = env.Unpack(os.path.join('dependencies', 'libffi'), libffi_archive, UNPACKLIST=[os.path.join(libffi_name, source) for source in libffi_headers])
+#libffi_source = env.Unpack(os.path.join('dependencies', 'libffi'), libffi_archive, UNPACKLIST=[os.path.join(libffi_name, source) for source in libffi_sources])
 
 
 
@@ -335,6 +338,10 @@ have_dict = {
     "TIME_WITH_SYS_TIME": conf.CheckHeader('time.h') and conf.CheckHeader('sys/time.h'),
 
     "HAVE_DYNAMIC_LOADING": 0,
+    # According to the POSIX spec, a pthreads implementation must
+    # define _POSIX_THREADS in unistd.h. This does not seems to be the case
+    # for ming
+    "_POSIX_THREADS": conf.CheckHeader('pthread.h'),
 
 }
 
@@ -425,26 +432,24 @@ env.Substfile('pyconfig.h.in', SUBST_DICT=subst_dict)
 
 
 
-ffi_header = env.Substfile(libffi_header[0], SUBST_DICT={
-    '@TARGET@': 'X86_32',
-    '@HAVE_LONG_DOUBLE_VARIANT@':0,
-    '@FFI_EXEC_TRAMPOLINE_TABLE@':0,
-    '@HAVE_LONG_DOUBLE@': 1 if (typesize_dict['SIZEOF_LONG_DOUBLE'] and (typesize_dict['SIZEOF_LONG_DOUBLE']!=typesize_dict['SIZEOF_DOUBLE'])) else 0,
-})
-env.Append(CPPPATH = [
-    libffi_name,
-    os.path.join(libffi_name, 'include'),
-    os.path.join(libffi_name, 'src', 'x86'),
-])
-ffi_config_header = env.Substfile(libffi_header[1], SUBST_DICT=subst_dict)
+#ffi_header = env.Substfile(libffi_header[0], SUBST_DICT={
+    #'@TARGET@': 'X86_32',
+    #'@HAVE_LONG_DOUBLE_VARIANT@':0,
+    #'@FFI_EXEC_TRAMPOLINE_TABLE@':0,
+    #'@HAVE_LONG_DOUBLE@': 1 if (typesize_dict['SIZEOF_LONG_DOUBLE'] and (typesize_dict['SIZEOF_LONG_DOUBLE']!=typesize_dict['SIZEOF_DOUBLE'])) else 0,
+#})
+#env.Append(CPPPATH = [
+    #libffi_name,
+    #os.path.join(libffi_name, 'include'),
+    #os.path.join(libffi_name, 'src', 'x86'),
+#])
+#ffi_config_header = env.Substfile(libffi_header[1], SUBST_DICT=subst_dict)
 
-zlib_library = env.Library(
-'zlib', zlib_source
-)
+zlib_library = env.Library('zlib', zlib_source)
 
-libffi_library = env.Library(
-'libffi', libffi_source
-)
+#libffi_library = env.Library(
+#'libffi', libffi_source
+#)
 
 #
 # replacement of Setup.dist
@@ -487,10 +492,6 @@ static_modules = {
         os.path.join('Modules', '_io', 'stringio.c'),
         ],
     
-    # The zipimport module is always imported at startup. Having it as a
-    # builtin module avoids some bootstrapping problems and reduces overhead.
-    'zipimport':  [os.path.join('Modules', 'zipimport.c')],
-    
     # faulthandler module
     'faulthandler':  [os.path.join('Modules', 'faulthandler.c')],
     
@@ -502,10 +503,7 @@ static_modules = {
 
     'winreg': [os.path.join('PC', 'winreg.c')],
     '_socket': [os.path.join('Modules', 'socketmodule.c')],
-    'zlib':   [
-        os.path.join('Modules', 'zlibmodule.c'),
-        zlib_library
-        ],
+
 # Modules that should always be present (non UNIX dependent):
 
     'array':  [os.path.join('Modules', 'arraymodule.c')],	# array objects
@@ -579,6 +577,10 @@ static_modules = {
 
 # posix (UNIX) system calls
 
+zlibmodule = env.StaticObject(os.path.join('Modules', 'zlibmodule.c'))
+Depends(zlibmodule, zlib_source)
+static_modules['zlib'] = zlibmodule
+        
 if additional_defines_dict['MS_WINDOWS']:
     static_modules['nt'] = env.StaticObject(os.path.join('Modules', 'posixmodule.c'), CPPDEFINES = '-D_MSC_VER')
     static_modules['msvcrt'] = env.StaticObject(os.path.join('PC', 'msvcrtmodule.c'))
@@ -634,7 +636,6 @@ MODOBJS=        [
     os.path.join('Modules/_io/bufferedio.c'), 
     os.path.join('Modules/_io/textio.c'),
     os.path.join('Modules/_io/stringio.c'), 
-    os.path.join('Modules/zipimport.c'),
     os.path.join('Modules/faulthandler.c'),  
     os.path.join('Modules/_tracemalloc.c'),
     os.path.join('Modules/hashtable.c'),
@@ -873,6 +874,7 @@ env.Program('pgen', PGENOBJS)
 # avoid long command lines, same as LIBRARY_OBJS
 
 library = env.Library(LIBRARY, LIBRARY_OBJS)
+
         
 # Build the interpreter
 
