@@ -10,7 +10,7 @@ pipelines:
     - step:
         script:
           # install deps
-          - apt-get update && apt-get install -y scons wine mingw-w64 git
+          - apt-get update && apt-get install -y scons wine mingw-w64 git wine-binfmt
           # prepare cpython code
           - git clone https://github.com/python/cpython.git cpython
           # runs scons
