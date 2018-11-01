@@ -29,24 +29,6 @@ else:
 
 # External files needed
 
-zlib_sources = [
-    'adler32.c',
-    'crc32.c',
-    'deflate.c',
-    'inflate.c',
-    'gzlib.c',
-    'gzclose.c',
-    'gzread.c',
-    'gzwrite.c',
-    'infback.c',
-    'inffast.c',
-    'inftrees.c',
-    'trees.c',
-    'uncompr.c',
-    'zutil.c',
-    'zlib.h',
-]
-
 libffi_headers = [
     os.path.join('include', 'ffi.h.in'),
     'fficonfig.h.in',
@@ -76,7 +58,6 @@ zlib_archive = env.URLDownload('zlib.tar.gz', 'https://zlib.net/zlib-1.2.11.tar.
 
 
 zlib_source = env.Unpack(Dir('zlib_src'), zlib_archive)
-print('zlib source', zlib_source)
 env.Append(CPPPATH = zlib_source)
 
 #libffi_header = env.Unpack(os.path.join('dependencies', 'libffi'), libffi_archive, UNPACKLIST=[os.path.join(libffi_name, source) for source in libffi_headers])
@@ -445,7 +426,26 @@ env.Substfile('pyconfig.h.in', SUBST_DICT=subst_dict)
 #])
 #ffi_config_header = env.Substfile(libffi_header[1], SUBST_DICT=subst_dict)
 
-zlib_library = env.Library('zlib', zlib_source)
+zlib_sources = [
+    'adler32.c',
+    'crc32.c',
+    'deflate.c',
+    'inflate.c',
+    'gzlib.c',
+    'gzclose.c',
+    'gzread.c',
+    'gzwrite.c',
+    'infback.c',
+    'inffast.c',
+    'inftrees.c',
+    'trees.c',
+    'uncompr.c',
+    'zutil.c',
+    'zlib.h',
+]
+
+zlib_library = env.Library('zlib', [os.path.join('zlib_src', s) for s in zlib_sources])
+Depends(zlib_library, zlib_source)
 
 #libffi_library = env.Library(
 #'libffi', libffi_source

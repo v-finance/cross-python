@@ -57,7 +57,6 @@ def generate(env):
       'URLDownload': env.Builder(
          action = SCons.Action.Action(URLDownload, URLDownloadString),
          emitter = emitter,
-         #target_factory = env.fs.Entry,
          source_factory = SCons.Node.Python.Value,
       ),
    })
