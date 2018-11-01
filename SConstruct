@@ -14,6 +14,7 @@ env = Environment(
     AR = "x86_64-w64-mingw32-ar",
     LDMODULE = "x86_64-w64-mingw32-ld",
     LDFLAGS = "--allow-multiple-definition",
+    LIBPATH = "libffi/lib/",
 )
 
 version_re = re.compile("m4_define\(PYTHON_VERSION, (.*)\)")
@@ -29,38 +30,28 @@ else:
 
 # External files needed
 
-libffi_headers = [
-    os.path.join('include', 'ffi.h.in'),
-    'fficonfig.h.in',
-    os.path.join('include', 'ffi_common.h'),
-]
-
-libffi_sources = [
-    os.path.join('src', 'types.c'),
-    os.path.join('src', 'closures.c'),
-    os.path.join('src', 'raw_api.c'),
-    os.path.join('src', 'prep_cif.c'),
-    os.path.join('src', 'java_raw_api.c'),
-    os.path.join('src', 'dlmalloc.c'),
-    os.path.join('src', 'debug.c'),
-    os.path.join('src', 'x86', 'ffi.c'),
-    os.path.join('src', 'x86', 'win32.S'),
-]
-
 # Download dependencies
 
 zlib_archive = env.URLDownload('zlib.tar.gz', 'https://zlib.net/zlib-1.2.11.tar.gz')
-libffi_archive = env.URLDownload('libffi.tar.gz', 'ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz')
+#libffi_archive = env.URLDownload('libffi.tar.gz', 'ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz')
 
 # Unpack dependencies
 
 
-zlib_source = env.Unpack(Dir('zlib_src'), zlib_archive)
-env.Append(CPPPATH = zlib_source)
+zlib_source = env.Unpack([], zlib_archive, UNPACK='zlib_src')
+env.Append(CPPPATH = 'zlib_src')
 
-libffi_source = env.Unpack(Dir('libffi_src'), libffi_archive)
-env.Append(CPPPATH = libffi_source)
-
+#libffi_sources = env.Unpack([
+#    os.path.join('src', 'types.c'),
+#    os.path.join('src', 'closures.c'),
+#    os.path.join('src', 'raw_api.c',),
+#    os.path.join('src', 'prep_cif.c',),
+#    os.path.join('src', 'java_raw_api.c',),
+#    os.path.join('src', 'dlmalloc.c',),
+#    os.path.join('src', 'debug.c',),
+#    os.path.join('src', 'x86', 'ffi.c',),
+#    #os.path.join('src', 'x86', 'win32.S'),
+#    ], libffi_archive, UNPACK = 'libffi_src')
 
 
 # === Variables set by configure
@@ -69,7 +60,7 @@ env.Append(CPPPATH = libffi_source)
 SOABI=		'cpython-36m-x86_64-linux-gnu'
 VPATH=          'sourcedir'
 
-LIBS=		['pthread', 'version', 'mingw32', 'ws2_32', 'shlwapi', 'winpthread']# 'dl', 'util',]
+LIBS=		['pthread', 'version', 'mingw32', 'ws2_32', 'shlwapi', 'winpthread', 'ole32', 'oleaut32', 'uuid', 'ffi']# 'dl', 'util',]
 LIBM=		['m']
 LIBC=		[]
 SYSLIBS=	LIBM + LIBC
@@ -397,8 +388,6 @@ if additional_defines_dict["MS_WINDOWS"]:
 #define PAGE_READWRITE 0x04
 #define MEM_RELEASE 0x8000
 
-
-
 """)
 
 subst_dict["#define Py_PYCONFIG_H"] = "\n".join(["#define Py_PYCONFIG_H"] + additional_defines)
@@ -406,23 +395,6 @@ subst_dict["#define Py_PYCONFIG_H"] = "\n".join(["#define Py_PYCONFIG_H"] + addi
 env.Substfile('pyconfig.h.in', SUBST_DICT=subst_dict)
 
 # Build dependencies
-
-
-
-
-
-#ffi_header = env.Substfile(libffi_header[0], SUBST_DICT={
-    #'@TARGET@': 'X86_32',
-    #'@HAVE_LONG_DOUBLE_VARIANT@':0,
-    #'@FFI_EXEC_TRAMPOLINE_TABLE@':0,
-    #'@HAVE_LONG_DOUBLE@': 1 if (typesize_dict['SIZEOF_LONG_DOUBLE'] and (typesize_dict['SIZEOF_LONG_DOUBLE']!=typesize_dict['SIZEOF_DOUBLE'])) else 0,
-#})
-#env.Append(CPPPATH = [
-    #libffi_name,
-    #os.path.join(libffi_name, 'include'),
-    #os.path.join(libffi_name, 'src', 'x86'),
-#])
-#ffi_config_header = env.Substfile(libffi_header[1], SUBST_DICT=subst_dict)
 
 zlib_sources = [
     'adler32.c',
@@ -445,9 +417,27 @@ zlib_sources = [
 zlib_library = env.Library('zlib', [os.path.join('zlib_src', s) for s in zlib_sources])
 Depends(zlib_library, zlib_source)
 
-#libffi_library = env.Library(
-#'libffi', libffi_source
-#)
+#libffi_h_sources = env.Unpack([os.path.join('include', 'ffi.h.in')], libffi_archive, UNPACK='libffi_src')
+#print(libffi_h_sources)
+#for s in libffi_h_sources:
+#    ffi_header = env.Substfile(os.path.join('libffi_src', 'include', 'ffi.h'), s, SUBST_DICT={
+#        '@TARGET@': 'X86_32',
+#        '@HAVE_LONG_DOUBLE_VARIANT@':0,
+#        '@FFI_EXEC_TRAMPOLINE_TABLE@':0,
+#        '@HAVE_LONG_DOUBLE@': 1 if (typesize_dict['SIZEOF_LONG_DOUBLE'] and (typesize_dict['SIZEOF_LONG_DOUBLE']!=typesize_dict['SIZEOF_DOUBLE'])) else 0,
+#    })
+#    print('created ffi header', str(s), str(ffi_header))
+
+#env.Append(CPPPATH = [
+#    #libffi_name,
+#    #os.path.join(libffi_name, 'include'),
+#    #os.path.join(libffi_name, 'src', 'x86'),
+#])
+
+#libffi_config_source = env.Unpack(['fficonfig.h.in',], libffi_archive, UNPACK = 'libffi_src')
+#ffi_config_header = env.Substfile(libffi_config_source, SUBST_DICT=subst_dict)
+
+
 
 #
 # replacement of Setup.dist
@@ -456,6 +446,12 @@ Depends(zlib_library, zlib_source)
 # The modules listed here can't be built as shared libraries for
 # various reasons; therefore they are listed here instead of in the
 # normal order.
+
+module_env = env.Clone()
+
+#libffi_library = module_env.Library(
+#    'libffi', libffi_sources, CPPFLAGS='-U_WIN64', CPPDEFINES = ['-DMS_WIN32',]
+#)
 
 static_modules = {
     # This only contains the minimal set of modules required to run the
@@ -528,15 +524,15 @@ static_modules = {
     '_thread':      [os.path.join('Modules', '_threadmodule.c')],
     '_contextvars': [os.path.join('Modules', '_contextvarsmodule.c')],
     #'_overlapped':  [os.path.join('Modules', 'overlapped.c')],
-    #'_ctypes': [
-        #libffi_library,
-        #env.StaticObject(os.path.join('Modules', '_ctypes', '_ctypes.c'), CPPDEFINES = '-DMS_WIN32'),
-        #os.path.join('Modules', '_ctypes', 'callbacks.c'),
-        #os.path.join('Modules', '_ctypes', 'callproc.c'),
-        #os.path.join('Modules', '_ctypes', 'stgdict.c'),
-        #os.path.join('Modules', '_ctypes', 'cfield.c'),
+    '_ctypes': [
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', '_ctypes.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'callbacks.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'callproc.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'stgdict.c'), CPPDEFINES = '-DX86_WIN32', CPPFLAGS='-U_WIN64',),
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'cfield.c'), CPPDEFINES = '-DX86_WIN32', CPPFLAGS='-U_WIN64',),
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'malloc_closure.c'), CPPDEFINES = '-DMS_WIN32', CPPFLAGS='-U_WIN64',),
+    ],
 
-    #],
 
 
 # Modules with some UNIX dependencies -- on by default:
@@ -603,10 +599,12 @@ if additional_defines_dict["MS_WINDOWS"]:
 # This part replaces the shell script in Modules/makesetup
 #
 env.Append(CPPPATH = ['Include', '.',])
+module_env.Append(CPPPATH = ['Include', '.',])
 
 
 if additional_defines_dict['MS_WINDOWS'] == True:
     env.Append(CPPPATH = ['PC'])
+    module_env.Append(CPPPATH = [os.path.join('libffi', 'lib', 'libffi-3.2.1', 'include/'),])
 
 # === Variables set by makesetup ===
 
@@ -655,6 +653,8 @@ env.Append(CPPDEFINES = '-DPREFIX=\'"{0}"\''.format(prefix))
 env.Append(CPPDEFINES = '-DEXEC_PREFIX=\'"{0}"\''.format(exec_prefix))
 env.Append(CPPDEFINES = '-DVERSION=\'"{0}"\''.format(VERSION))
 env.Append(CPPDEFINES = '-DVPATH=\'"{0}"\''.format(VPATH))
+
+
 for f in PY_CORE_CFLAGS:
     env.Append(CFLAGS = f)
 
@@ -878,7 +878,7 @@ library = env.Library(LIBRARY, LIBRARY_OBJS)
 
 interpreter_env = env.Clone()
 interpreter_env.Append(LIBPATH = '.')
-interpreter_env.Append(LIBS = [LIBRARY]+LIBS+SYSLIBS+MODLIBS)
+interpreter_env.Append(LIBS = []+LIBS+SYSLIBS+MODLIBS)
 interpreter_env.Append(LINKFLAGS = '-municode') # use wmain instead of main in windows
 
 interpreter = interpreter_env.Program(BUILDPYTHON, [

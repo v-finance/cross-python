@@ -33,7 +33,6 @@ def URLDownload(target, source, env):
          raise SCons.Errors.StopError( e )
 
 def emitter(target, source, env):
-   print('emitter', target, source)
    new_source = []
    for s in source:
       new_source = str(s).split('/')[-1] + '.url'
