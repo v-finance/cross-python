@@ -50,9 +50,7 @@ libffi_sources = [
 # Download dependencies
 
 zlib_archive = env.URLDownload('zlib.tar.gz', 'https://zlib.net/zlib-1.2.11.tar.gz')
-
-#libffi_name = 'libffi-3.2.1'
-#libffi_archive = env.URLDownload('libffi.tar.gz', "ftp://sourceware.org/pub/libffi/{}.tar.gz".format(libffi_name))
+libffi_archive = env.URLDownload('libffi.tar.gz', 'ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz')
 
 # Unpack dependencies
 
@@ -60,8 +58,8 @@ zlib_archive = env.URLDownload('zlib.tar.gz', 'https://zlib.net/zlib-1.2.11.tar.
 zlib_source = env.Unpack(Dir('zlib_src'), zlib_archive)
 env.Append(CPPPATH = zlib_source)
 
-#libffi_header = env.Unpack(os.path.join('dependencies', 'libffi'), libffi_archive, UNPACKLIST=[os.path.join(libffi_name, source) for source in libffi_headers])
-#libffi_source = env.Unpack(os.path.join('dependencies', 'libffi'), libffi_archive, UNPACKLIST=[os.path.join(libffi_name, source) for source in libffi_sources])
+libffi_source = env.Unpack(Dir('libffi_src'), libffi_archive)
+env.Append(CPPPATH = libffi_source)
 
 
 
