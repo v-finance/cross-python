@@ -60,13 +60,13 @@ env.Append(CPPPATH = 'zlib_src')
 SOABI=		'cpython-36m-x86_64-linux-gnu'
 VPATH=          'sourcedir'
 
-LIBS=		['pthread', 'version', 'mingw32', 'ws2_32', 'shlwapi', 'winpthread', 'ole32', 'oleaut32', 'uuid', 'ffi']# 'dl', 'util',]
+LIBS=		['pthread', 'version', 'mingw32', 'ws2_32', 'shlwapi', 'winpthread', 'ole32', 'oleaut32', 'uuid', ]# 'dl', 'util',]
 LIBM=		['m']
 LIBC=		[]
 SYSLIBS=	LIBM + LIBC
 
 THREADOBJ=	os.path.join('Python', 'thread.c')
-DYNLOADFILE =   'dynload_stub.c' # dynload_shlib
+DYNLOADFILE =   'dynload_win' #'dynload_stub.c' # dynload_shlib
 BUILDPYTHON=    'python'
 LIBRARY=	'python'
 
@@ -524,14 +524,15 @@ static_modules = {
     '_thread':      [os.path.join('Modules', '_threadmodule.c')],
     '_contextvars': [os.path.join('Modules', '_contextvarsmodule.c')],
     #'_overlapped':  [os.path.join('Modules', 'overlapped.c')],
-    '_ctypes': [
-        module_env.StaticObject(os.path.join('Modules', '_ctypes', '_ctypes.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
-        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'callbacks.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
-        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'callproc.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
-        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'stgdict.c'), CPPDEFINES = '-DX86_WIN32', CPPFLAGS='-U_WIN64',),
-        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'cfield.c'), CPPDEFINES = '-DX86_WIN32', CPPFLAGS='-U_WIN64',),
-        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'malloc_closure.c'), CPPDEFINES = '-DMS_WIN32', CPPFLAGS='-U_WIN64',),
-    ],
+    #'_ctypes': [
+    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', '_ctypes.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
+    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'callbacks.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
+    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'callproc.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
+    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'stgdict.c'), CPPDEFINES = '-DX86_WIN32', CPPFLAGS='-U_WIN64',),
+    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'cfield.c'), CPPDEFINES = '-DX86_WIN32', CPPFLAGS='-U_WIN64',),
+    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'malloc_closure.c'), CPPDEFINES = '-DMS_WIN32', CPPFLAGS='-U_WIN64',),
+    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'libffi_msvc', 'ffi_additional.c'), CPPDEFINES = '-DMS_WIN32', CPPFLAGS='-U_WIN64',),
+    #],
 
 
 
@@ -791,8 +792,8 @@ PYTHON_OBJS = [
     #os.path.join('$(DTRACE_OBJS'),
 ]
 
-if additional_defines_dict['MS_WINDOWS'] == True:
-    PYTHON_OBJS.append(os.path.join('Python', 'dynload_win.c'))
+#if additional_defines_dict['MS_WINDOWS'] == True:
+#    PYTHON_OBJS.append(os.path.join('Python', 'dynload_win.c'))
 
 ##########################################################################
 # Objects
@@ -884,7 +885,7 @@ interpreter_env.Append(LINKFLAGS = '-municode') # use wmain instead of main in w
 interpreter = interpreter_env.Program(BUILDPYTHON, [
     os.path.join('Programs', 'python.c'),
     library, zlib_library,
-    #os.path.join('PC', 'WinMain.c'),
+    os.path.join('PC', 'WinMain.c'),
 ])
 
 # Build the standard library
