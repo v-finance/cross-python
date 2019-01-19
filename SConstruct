@@ -60,7 +60,7 @@ env.Append(CPPPATH = 'zlib_src')
 SOABI=		'cpython-36m-x86_64-linux-gnu'
 VPATH=          'sourcedir'
 
-LIBS=		['pthread', 'version', 'mingw32', 'ws2_32', 'shlwapi', 'winpthread', 'ole32', 'oleaut32', 'uuid', ]# 'dl', 'util',]
+LIBS=		['pthread', 'version', 'mingw32', 'ws2_32', 'shlwapi', 'winpthread', 'ole32', 'oleaut32', 'uuid', 'ffi']# 'dl', 'util',]
 LIBM=		['m']
 LIBC=		[]
 SYSLIBS=	LIBM + LIBC
@@ -524,15 +524,15 @@ static_modules = {
     '_thread':      [os.path.join('Modules', '_threadmodule.c')],
     '_contextvars': [os.path.join('Modules', '_contextvarsmodule.c')],
     #'_overlapped':  [os.path.join('Modules', 'overlapped.c')],
-    #'_ctypes': [
-    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', '_ctypes.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
-    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'callbacks.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
-    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'callproc.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
-    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'stgdict.c'), CPPDEFINES = '-DX86_WIN32', CPPFLAGS='-U_WIN64',),
-    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'cfield.c'), CPPDEFINES = '-DX86_WIN32', CPPFLAGS='-U_WIN64',),
-    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'malloc_closure.c'), CPPDEFINES = '-DMS_WIN32', CPPFLAGS='-U_WIN64',),
-    #    module_env.StaticObject(os.path.join('Modules', '_ctypes', 'libffi_msvc', 'ffi_additional.c'), CPPDEFINES = '-DMS_WIN32', CPPFLAGS='-U_WIN64',),
-    #],
+    '_ctypes': [
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', '_ctypes.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'callbacks.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'callproc.c'), CPPDEFINES = ['-DMS_WIN32', '-DX86_WIN32'], CPPFLAGS='-U_WIN64',),
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'stgdict.c'), CPPDEFINES = '-DX86_WIN32', CPPFLAGS='-U_WIN64',),
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'cfield.c'), CPPDEFINES = '-DX86_WIN32', CPPFLAGS='-U_WIN64',),
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'malloc_closure.c'), CPPDEFINES = '-DMS_WIN32', CPPFLAGS='-U_WIN64',),
+        module_env.StaticObject(os.path.join('Modules', '_ctypes', 'libffi_msvc', 'ffi_additional.c'), CPPDEFINES = '-DMS_WIN32', CPPFLAGS='-U_WIN64',),
+    ],
 
 
 
@@ -872,8 +872,11 @@ env.Program('pgen', PGENOBJS)
 # Build static library
 # avoid long command lines, same as LIBRARY_OBJS
 
+
 library = env.Library(LIBRARY, LIBRARY_OBJS)
 
+
+overlapped = env.SharedObject('_overlapped',  [os.path.join('Modules', 'overlapped.c')])
         
 # Build the interpreter
 
