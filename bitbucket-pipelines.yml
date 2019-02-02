@@ -11,10 +11,12 @@ pipelines:
         script:
           # install deps
           - dpkg --add-architecture i386
-          - add-apt-repository ppa:wine/wine-builds
+          - wget https://dl.winehq.org/wine-builds/Release.key
+          - apt-key add Release.key
+          - apt-add-repository https://dl.winehq.org/wine-builds/ubuntu/
           - apt-get update 
-          - apt-get install -y ninja-build meson mingw-w64 git
           - apt-get install --install-recommends winehq-stable
+          - apt-get install -y ninja-build meson mingw-w64 git
           # meson setup
           - mkdir builddir
           - meson builddir
