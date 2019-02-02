@@ -10,7 +10,7 @@ pipelines:
     - step:
         script:
           # install deps
-          - apt-get update && apt-get install -y ninja-build meson wine mingw-w64 git
+          - apt-get update && apt-get install -y ninja-build meson wine64 mingw-w64 git
           # meson setup
           - mkdir builddir
           - meson builddir
