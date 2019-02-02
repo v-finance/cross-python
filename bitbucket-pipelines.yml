@@ -11,9 +11,10 @@ pipelines:
         script:
           # install deps
           - apt-get update && apt-get install -y ninja-build meson wine mingw-w64 git wine-binfmt
+          # meson setup
+          - meson builddir
+          - meson configure -Dsource=cpython builddir
           # prepare cpython code
           - git clone https://github.com/python/cpython.git cpython
-          # runs scons
-          - meson setup builddir
-          - meson configure -Dsource=cpython builddir
+          # run build
           - ninja -C builddir

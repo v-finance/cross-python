@@ -15,10 +15,9 @@ Download and unzip the Python source code.
 
 Start the build script by pointing it to the Python source code ::
 
-    meson setup builddir
+    meson builddir
     meson configure -Dsource=../cpython builddir
-    cd builddir
-    ninja
+    ninja -C builddir
 
 Cross compiling
 ===============
