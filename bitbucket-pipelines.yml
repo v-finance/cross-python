@@ -12,6 +12,7 @@ pipelines:
           # install deps
           - apt-get update && apt-get install -y ninja-build meson wine mingw-w64 git wine-binfmt
           # meson setup
+          - mkdir builddir
           - meson builddir
           - meson configure -Dsource=cpython builddir
           # prepare cpython code
