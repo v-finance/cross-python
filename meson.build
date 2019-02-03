@@ -61,6 +61,8 @@ PY_CORE_CFLAGS = PY_CFLAGS + PY_CFLAGS_NODIST + PY_CPPFLAGS + CFLAGSFORSHARED + 
 # 'pyconfig.h.in' template file is used.
 #
 
+LIBRARY = 'python'
+
 conf_data = configuration_data()
 
 # configure.ac line 122
@@ -255,3 +257,42 @@ executable(
     c_args : PY_CORE_CFLAGS,
     install : true
 )
+
+#
+# Python Library
+#
+
+OBJECT_OBJS = []
+PYTHON_OBJS = []
+MODULE_OBJS = []
+MODOBJS = []
+
+LIBRARY_OBJS_OMIT_FROZEN = [
+    join_paths(python_source, 'Modules', 'getbuildinfo.c')
+]
+LIBRARY_OBJS_OMIT_FROZEN += PARSER_OBJS
+LIBRARY_OBJS_OMIT_FROZEN += OBJECT_OBJS
+LIBRARY_OBJS_OMIT_FROZEN += PYTHON_OBJS
+LIBRARY_OBJS_OMIT_FROZEN += MODULE_OBJS
+LIBRARY_OBJS_OMIT_FROZEN += MODOBJS
+
+LIBRARY_OBJS = LIBRARY_OBJS_OMIT_FROZEN + [
+    join_paths(python_source, 'Python', 'frozen.c')
+]
+
+static_library(
+    LIBRARY,
+    LIBRARY_OBJS,
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    pic : true,
+    install : true,
+)
+
+#shared_library(
+    #LIBRARY,
+    #LIBRARY_OBJS,
+    #include_directories : python_include,
+    #c_args : PY_CORE_CFLAGS,
+    #install : true,
+#)
