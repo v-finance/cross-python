@@ -1,7 +1,10 @@
 project('cross-python', 'c')
 
 python_source = get_option('source')
-python_include = include_directories(join_paths(python_source, 'Include'))
+python_include = include_directories(
+    join_paths(python_source, 'Include'),
+    join_paths(python_source, 'Include', 'internal'),
+)
 
 #
 # COMPILER DETECTION
@@ -214,6 +217,7 @@ foreach s : [
     'metagrammar.c',
     'firstsets.c',
     'grammar.c',
+    'token.c',
     'pgen.c',
     ]
     POBJS += join_paths(python_source, 'Parser', s)
