@@ -4,17 +4,26 @@ python_source = get_option('source')
 python_include = include_directories(join_paths(python_source, 'Include'))
 
 #
+# COMPILER DETECTION
+#
+
+compiler = meson.get_compiler('c')
+mingw = compiler.get_id()=='gcc' and host_machine.system()=='windows'
+
+#
 # COMPILER OPTIONS
 #
 
 
 OPT = [
     '-DNDEBUG', '-fwrapv', '-O3', '-Wall', '-Wstrict-prototypes',
-    # for mingw
-    # '-mwindows', '-municode'
     # -gstabs : to be able to debug using wine
     # '-gstabs'
 ]
+
+if mingw
+    OPT += ['-mwindows', '-municode']
+endif
 
 BASECFLAGS=	['-Wno-unused-result', '-Wsign-compare']
 BASECPPFLAGS=	[]
@@ -48,8 +57,6 @@ PY_CORE_CFLAGS = PY_CFLAGS + PY_CFLAGS_NODIST + PY_CPPFLAGS + CFLAGSFORSHARED + 
 # 'pyconfig.h'.  This differs from the autotools setup, in that no
 # 'pyconfig.h.in' template file is used.
 #
-
-compiler = meson.get_compiler('c')
 
 conf_data = configuration_data()
 
@@ -179,6 +186,14 @@ conf_data.set('HAVE_DYNAMIC_LOADING', 0)
 # for mingw
 conf_data.set('_POSIX_THREADS', compiler.check_header('pthread.h'))
     
+if mingw
+    # these appear to be missing from mingw
+    conf_data.set('MEM_COMMIT', '0x00001000')
+    conf_data.set('MEM_RESERVE', '0x00002000')
+    conf_data.set('PAGE_READWRITE', '0x04')
+    conf_data.set('MEM_RELEASE', '0x8000')
+endif
+
 configure_file(
     output : 'pyconfig.h',
     configuration : conf_data,
