@@ -13,6 +13,8 @@ mingw = compiler.get_id()=='gcc' and host_machine.system()=='windows'
 # COMPILER OPTIONS
 #
 
+THREADOBJ = join_paths(python_source, 'Python', 'thread.c')
+
 # include paths
 
 host_includes = []
@@ -84,6 +86,7 @@ conf_data = configuration_data()
 # The later defininition of _XOPEN_SOURCE disables certain features
 # on Linux, so we need _GNU_SOURCE to re-enable them (makedev, tm_zone).
 conf_data.set('_GNU_SOURCE', '1')  # Define on Linux to activate all library features
+conf_data.set('_PYTHONFRAMEWORK', '""')
 
 # check size of data types
 
@@ -205,6 +208,10 @@ conf_data.set('HAVE_DYNAMIC_LOADING', 0)
 # for mingw
 conf_data.set('_POSIX_THREADS', compiler.check_header('pthread.h'))
     
+if host_machine.system()=='windows'
+    conf_data.set('MAX_PATH', 260)
+endif
+
 if mingw
     # these appear to be missing from mingw
     conf_data.set('MEM_COMMIT', '0x00001000')
@@ -352,10 +359,46 @@ foreach s : [
     'getargs.c',
     'getcompiler.c',
     'getcopyright.c',
+    'getversion.c',
+    'graminit.c',
+    'hamt.c',
+    'import.c',
+    'importdl.c',
+    'marshal.c',
+    'modsupport.c',
+    'mystrtoul.c',
+    'mysnprintf.c',
+    'pathconfig.c',
+    'peephole.c',
+    'pyarena.c',
+    'pyctype.c',
+    'pyfpe.c',
+    'pyhash.c',
+    'pylifecycle.c',
+    'pymath.c',
+    'pystate.c',
+    'pythonrun.c',
+    'pytime.c',
+    'structmember.c',
+    'symtable.c',
+    'sysmodule.c',
+    'traceback.c',
+    'getopt.c',
+    'pystrcmp.c',
+    'pystrtod.c',
+    'pystrhex.c',
+    'dtoa.c',
+    'formatter_unicode.c',
+    'fileutils.c',
+    #os.path.join(dynload_obj),
+    #os.path.join('$(LIBOBJS'),
+    #os.path.join('$(MACHDEP_OBJS'),
+    #os.path.join('$(DTRACE_OBJS'),
     ]
     PYTHON_OBJS += join_paths(python_source, 'Python', s)
 endforeach
 
+PYTHON_OBJS += [THREADOBJ]
 MODULE_OBJS = []
 MODOBJS = []
 
