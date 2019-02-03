@@ -407,7 +407,75 @@ foreach s : [
 endforeach
 
 PYTHON_OBJS += [THREADOBJ]
-MODULE_OBJS = []
+
+# 
+# STATIC MODULES
+#
+# Builds minimum needed static modules
+#
+
+MODULE_OBJS = [
+#    config_c,
+    join_paths(python_source, 'Modules', 'main.c'),
+    join_paths(python_source, 'Modules', 'gcmodule.c'),
+]
+
+# The modules listed here can't be built as shared libraries for
+# various reasons; therefore they are listed here instead of in the
+# normal order.
+
+# This only contains the minimal set of modules required to run the
+# setup.py script in the root of the Python source tree.
+
+#posix -DPy_BUILD_CORE -I$(srcdir)/Include/internal posixmodule.c # posix (UNIX) system calls
+#errno errnomodule.c			# posix (UNIX) errno values
+#pwd pwdmodule.c				# this is needed to find out the user's home dir
+    ## if $HOME is not set
+#_sre _sre.c				# Fredrik Lundh's new regular expressions
+#_codecs _codecsmodule.c			# access to the builtin codecs and codec registry
+#_weakref _weakref.c			# weak references
+#_functools -DPy_BUILD_CORE -I$(srcdir)/Include/internal _functoolsmodule.c   # Tools for working with functions and callable objects
+#_operator _operator.c	        	# operator.add() and similar goodies
+#_collections _collectionsmodule.c	# Container types
+#_abc _abc.c				# Abstract base classes
+#itertools itertoolsmodule.c		# Functions creating iterators for efficient looping
+#atexit atexitmodule.c			# Register functions to be run at interpreter-shutdown
+#_signal -DPy_BUILD_CORE -I$(srcdir)/Include/internal signalmodule.c
+#_stat _stat.c				# stat.h interface
+#time -DPy_BUILD_CORE -I$(srcdir)/Include/internal timemodule.c	# -lm # time operations and variables
+#_thread -DPy_BUILD_CORE -I$(srcdir)/Include/internal _threadmodule.c	# low-level threading interface
+
+## access to ISO C locale support
+#_locale -DPy_BUILD_CORE _localemodule.c  # -lintl
+
+## Standard I/O baseline
+#_io -DPy_BUILD_CORE -I$(srcdir)/Include/internal -I$(srcdir)/Modules/_io _io/_iomodule.c _io/iobase.c _io/fileio.c _io/bytesio.c _io/bufferedio.c _io/textio.c _io/stringio.c
+
+## faulthandler module
+#faulthandler faulthandler.c
+
+## debug tool to trace memory blocks allocated by Python
+##
+## bpo-35053: The module must be builtin since _Py_NewReference()
+## can call _PyTraceMalloc_NewReference(). hashtable.c
+_tracemalloc = static_library(
+    '_tracemalloc', [
+        join_paths(python_source, 'Modules', '_tracemalloc.c'),
+        join_paths(python_source, 'Modules', 'hashtable.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    pic : true,
+)
+
+MODULE_OBJS_objs = _tracemalloc.extract_objects()
+#if host_machine.system()=='windows'
+    #MODULE_OBJS += [join_paths(python_source, 'PC', 'getpathp.c')]
+    #MODULE_OBJS += [join_paths(python_source, 'PC', 'dl_nt.c')]
+#else
+    #MODULE_OBJS += [join_paths(python_source, 'Modules', 'getpath.c')]
+#endif
+
 MODOBJS = []
 
 LIBRARY_OBJS_OMIT_FROZEN = [
@@ -437,6 +505,7 @@ static_library(
     #LIBRARY,
     #LIBRARY_OBJS,
     #include_directories : python_include,
+    #objects: MODULE_OBJS_objs,
     #c_args : PY_CORE_CFLAGS,
     #install : true,
     #dependencies : SYSLIBS
