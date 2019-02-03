@@ -1,10 +1,6 @@
 project('cross-python', 'c')
 
 python_source = get_option('source')
-python_include = include_directories(
-    join_paths(python_source, 'Include'),
-    join_paths(python_source, 'Include', 'internal'),
-)
 
 #
 # COMPILER DETECTION
@@ -17,6 +13,18 @@ mingw = compiler.get_id()=='gcc' and host_machine.system()=='windows'
 # COMPILER OPTIONS
 #
 
+# include paths
+
+host_includes = []
+if host_machine.system()=='windows'
+    host_includes += join_paths(python_source, 'PC')
+endif
+
+python_include = include_directories([
+    join_paths(python_source, 'Include'),
+    join_paths(python_source, 'Include', 'internal'),
+    ] + host_includes
+)
 
 OPT = [
     '-DNDEBUG', '-fwrapv', '-O3', '-Wall', '-Wstrict-prototypes',
@@ -263,6 +271,51 @@ executable(
 #
 
 OBJECT_OBJS = []
+foreach s : [
+    'abstract.c',
+    'accu.c',
+    'boolobject.c',
+    'bytes_methods.c',
+    'bytearrayobject.c',
+    'bytesobject.c',
+    'call.c',
+    'cellobject.c',
+    'classobject.c',
+    'codeobject.c',
+    'complexobject.c',
+    'descrobject.c',
+    'enumobject.c',
+    'exceptions.c',
+    'genobject.c',
+    'fileobject.c',
+    'floatobject.c',
+    'frameobject.c',
+    'funcobject.c',
+    'iterobject.c',
+    'listobject.c',
+    'longobject.c',
+    'dictobject.c',
+    'odictobject.c',
+    'memoryobject.c',
+    'methodobject.c',
+    'moduleobject.c',
+    'namespaceobject.c',
+    'object.c',
+    'obmalloc.c',
+    'capsule.c',
+    'rangeobject.c',
+    'setobject.c',
+    'sliceobject.c',
+    'structseq.c',
+    'tupleobject.c',
+    'typeobject.c',
+    'unicodeobject.c',
+    'unicodectype.c',
+    'weakrefobject.c',
+    ]
+    OBJECT_OBJS += join_paths(python_source, 'Objects', s)
+endforeach
+
 PYTHON_OBJS = []
 MODULE_OBJS = []
 MODOBJS = []
