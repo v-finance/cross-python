@@ -17,7 +17,7 @@ pipelines:
           - apt-key add Release.key
           - apt-add-repository https://dl.winehq.org/wine-builds/ubuntu/
           - apt-get update 
-          - apt-get install -y winehq-stable
+          - apt-get install -y --allow-unauthenticated winehq-stable
           - apt-get install -y ninja-build meson mingw-w64 git
           # meson setup
           - mkdir builddir

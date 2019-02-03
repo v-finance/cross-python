@@ -232,5 +232,6 @@ executable(
     'pgen',
     PGENOBJS,
     include_directories : python_include,
-    c_args : PY_CORE_CFLAGS
+    c_args : PY_CORE_CFLAGS,
+    install : true
 )
