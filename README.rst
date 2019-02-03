@@ -19,6 +19,17 @@ Start the build script by pointing it to the Python source code ::
     meson configure -Dsource=../cpython builddir
     ninja -C builddir
 
+Terminology
+===========
+
+Meson definitions are the following:
+
+ * build machine is the computer that is doing the actual compiling.
+
+ * host machine is the machine on which the compiled binary will run.
+ 
+ * target machine is the machine on which the compiled binary's output will run, only meaningful if the program produces machine-specific output.
+
 Cross compiling
 ===============
 
