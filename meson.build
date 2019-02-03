@@ -317,6 +317,31 @@ foreach s : [
 endforeach
 
 PYTHON_OBJS = []
+foreach s : [
+    '_warnings.c',
+    'Python-ast.c',
+    'asdl.c',
+    'ast.c',
+    'ast_opt.c',
+    'ast_unparse.c',
+    'bootstrap_hash.c',
+    'bltinmodule.c',
+    'coreconfig.c',
+    'ceval.c',
+    'compile.c',
+    'context.c',
+    'codecs.c',
+    'dynamic_annotations.c',
+    'errors.c',
+    'frozenmain.c',
+    'future.c',
+    'getargs.c',
+    'getcompiler.c',
+    'getcopyright.c',
+    ]
+    PYTHON_OBJS += join_paths(python_source, 'Python', s)
+endforeach
+
 MODULE_OBJS = []
 MODOBJS = []
 
