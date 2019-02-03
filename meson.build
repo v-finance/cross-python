@@ -36,6 +36,12 @@ if mingw
     OPT += ['-mwindows', '-municode']
 endif
 
+if host_machine.system()=='windows'
+    MACHDEP = 'win32'
+else
+    MACHDEP = host_machine.system()
+endif
+
 BASECFLAGS=	['-Wno-unused-result', '-Wsign-compare']
 BASECPPFLAGS=	[]
 CONFIGURE_CFLAGS= []	
@@ -316,6 +322,14 @@ foreach s : [
     OBJECT_OBJS += join_paths(python_source, 'Objects', s)
 endforeach
 
+platform_obj = static_library(
+    'getplatform',
+    join_paths(python_source, 'Python', 'getplatform.c'),
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS + ['-DPLATFORM="' + MACHDEP + '"'],
+    pic : true,
+)
+
 PYTHON_OBJS = []
 foreach s : [
     '_warnings.c',
@@ -362,6 +376,7 @@ static_library(
     LIBRARY,
     LIBRARY_OBJS,
     include_directories : python_include,
+    objects: platform_obj.extract_objects(),
     c_args : PY_CORE_CFLAGS,
     pic : true,
     install : true,
