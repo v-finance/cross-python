@@ -15,8 +15,7 @@ Download and unzip the Python source code.
 
 Start the build script by pointing it to the Python source code ::
 
-    meson builddir
-    meson configure -Dsource=../cpython builddir
+    meson -Dsource=../cpython builddir
     ninja -C builddir
 
 Terminology
@@ -54,7 +53,6 @@ Windows (mingw)
 
 Start the build script by using a cross-file ::
 
-    meson builddir-i686-w64-mingw32 --cross-file cross-files/i686-w64-mingw32.txt
-    meson configure -Dsource=../cpython builddir-i686-w64-mingw32
+    meson -Dsource=../cpython --cross-file cross-files/i686-w64-mingw32.txt builddir-i686-w64-mingw32
     ninja -C builddir-i686-w64-mingw32
 

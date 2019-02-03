@@ -21,9 +21,7 @@ pipelines:
           - apt-get install -y ninja-build mingw-w64 git python3-pip
           - pip3 install meson
           # meson setup
-          - mkdir builddir
-          - meson builddir
-          - meson configure -Dsource=cpython builddir
+          - meson -Dsource=cpython builddir
           # prepare cpython code
           - git clone https://github.com/python/cpython.git cpython
           # run build
