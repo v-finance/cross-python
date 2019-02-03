@@ -22,7 +22,9 @@ pipelines:
           - pip3 install meson
           # prepare cpython code
           - git clone https://github.com/python/cpython.git cpython
-          # meson setup
+          # native build
           - meson -Dsource=cpython builddir
-          # run build
           - ninja -C builddir
+          # mingw build
+          - meson -Dsource=cpython --cross-file cross-files/i686-w64-mingw32.txt builddir-i686-w64-mingw32
+          - ninja -C builddir-i686-w64-mingw32

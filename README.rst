@@ -21,7 +21,7 @@ Start the build script by pointing it to the Python source code ::
 Terminology
 ===========
 
-Meson definitions are the following:
+Meson definitions are the following :
 
  * build machine is the computer that is doing the actual compiling.
 
