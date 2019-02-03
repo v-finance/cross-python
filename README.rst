@@ -33,6 +33,11 @@ Meson definitions are the following:
 Cross compiling
 ===============
 
+Different configuration files for cross compiling are in the *cross-files* directory 
+
+Windows (mingw)
+---------------
+
  * binfmt-misc support running exe files under linux when wine is installed,
    it creates /proc/sys/fs/binfmt_misc/wine which allows the configure tests
    work.
@@ -46,3 +51,10 @@ Cross compiling
     * Press `Add`
     * Select the library in `Existing overrides`, press `Edit`
     * Set the library to `disabled`
+
+Start the build script by using a cross-file ::
+
+    meson builddir-i686-w64-mingw32 --cross-file cross-files/i686-w64-mingw32.txt
+    meson configure -Dsource=../cpython builddir-i686-w64-mingw32
+    ninja -C builddir-i686-w64-mingw32
+
