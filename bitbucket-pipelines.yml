@@ -20,9 +20,9 @@ pipelines:
           - apt-get install -y --allow-unauthenticated winehq-stable
           - apt-get install -y ninja-build mingw-w64 git python3-pip
           - pip3 install meson
-          # meson setup
-          - meson -Dsource=cpython builddir
           # prepare cpython code
           - git clone https://github.com/python/cpython.git cpython
+          # meson setup
+          - meson -Dsource=cpython builddir
           # run build
           - ninja -C builddir

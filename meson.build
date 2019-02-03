@@ -164,6 +164,7 @@ conf_data.set('HAVE_UTIME_H', compiler.check_header('utime.h'))
 conf_data.set('HAVE_DIRECT_H', compiler.check_header('direct.h'))
 conf_data.set('HAVE_IO_H', compiler.check_header('io.h'))
 conf_data.set('HAVE_PROCESS_H', compiler.check_header('process.h'))
+conf_data.set('MS_WINDOWS', compiler.check_header('windows.h'))
     
 # @todo : more complex checks in configure.ac
 conf_data.set('HAVE_STD_ATOMIC', compiler.check_header('stdatomic.h')) # line 5397
