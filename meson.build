@@ -13,6 +13,14 @@ mingw = compiler.get_id()=='gcc' and host_machine.system()=='windows'
 # COMPILER OPTIONS
 #
 
+SOABI=		'cpython-36m-x86_64-linux-gnu'
+VPATH=          'sourcedir'
+
+LIBS=		[dependency('threads'),]
+LIBM=		[]#[dependency('m')]
+LIBC=		[]
+SYSLIBS=	LIBM + LIBC
+
 THREADOBJ = join_paths(python_source, 'Python', 'thread.c')
 
 # include paths
@@ -431,4 +439,5 @@ static_library(
     #include_directories : python_include,
     #c_args : PY_CORE_CFLAGS,
     #install : true,
+    #dependencies : SYSLIBS
 #)
