@@ -16,8 +16,10 @@ mingw = compiler.get_id()=='gcc' and host_machine.system()=='windows'
 SOABI=		'cpython-36m-x86_64-linux-gnu'
 VPATH=          'sourcedir'
 
-LIBS=		[dependency('threads'),]
-LIBM=		[]#[dependency('m')]
+LIBS=		[
+    dependency('threads'),
+]
+LIBM=		[compiler.find_library('m', required : false)]
 LIBC=		[]
 SYSLIBS=	LIBM + LIBC
 
@@ -502,11 +504,11 @@ static_library(
 )
 
 #shared_library(
-    #LIBRARY,
-    #LIBRARY_OBJS,
-    #include_directories : python_include,
-    #objects: MODULE_OBJS_objs,
-    #c_args : PY_CORE_CFLAGS,
-    #install : true,
-    #dependencies : SYSLIBS
+#    LIBRARY,
+#    LIBRARY_OBJS,
+#    include_directories : python_include,
+#    objects: MODULE_OBJS_objs,
+#    c_args : PY_CORE_CFLAGS,
+#    install : true,
+#    dependencies : SYSLIBS + LIBS
 #)
