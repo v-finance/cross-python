@@ -62,6 +62,7 @@ OPT = [
 
 if mingw
     OPT += ['-mwindows', '-municode']
+    add_project_link_arguments('-municode', '-mwindows', language:'c')
     SYSLIBS += [
         compiler.find_library('mingw32', required : true),
         compiler.find_library('winpthread', required : true),
@@ -343,13 +344,13 @@ endforeach
 
 PGENOBJS = POBJS + PGOBJS
 
-executable(
-    'pgen',
-    PGENOBJS,
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-    install : true
-)
+#executable(
+#    'pgen',
+#    PGENOBJS,
+#    include_directories : python_include,
+#    c_args : PY_CORE_CFLAGS,
+#    install : true
+#)
 
 #
 # Python Library
@@ -662,12 +663,29 @@ static_library(
     install : true,
 )
 
-shared_library(
+libpython = shared_library(
     LIBRARY,
     LIBRARY_OBJS ,
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     install : true,
     link_with : [_tracemalloc, _signal, faulthandler, _io, time, platform_obj, getpath, posix, dynload],
+    dependencies : SYSLIBS + LIBS,
+)
+
+PYTHON_SRC = [join_paths(python_source, 'Programs', 'python.c')]
+if host_machine.system()=='windows'
+    PYTHON_SRC += [
+        join_paths(python_source, 'PC', 'WinMain.c'),
+    ]
+endif
+
+executable(
+    'python',
+    PYTHON_SRC,
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    install : true,
+    link_with : [libpython],
     dependencies : SYSLIBS + LIBS,
 )
