@@ -2,6 +2,8 @@ project('cross-python', 'c')
 
 python_source = get_option('source')
 
+VERSION = '3.8'
+
 #
 # COMPILER DETECTION
 #
@@ -24,6 +26,20 @@ LIBC=		[]
 SYSLIBS=	LIBM + LIBC
 
 THREADOBJ = join_paths(python_source, 'Python', 'thread.c')
+if host_machine.system()=='windows'
+    DYNLOADFILE = 'dynload_win.c' #'dynload_stub.c' # dynload_shlib
+else
+    DYNLOADFILE = 'dynload_shlib.c'
+    SYSLIBS += [compiler.find_library('dl', required : true)]
+endif
+
+# Install prefix for architecture-independent files
+prefix=		'.'
+
+# Install prefix for architecture-dependent files
+exec_prefix=	prefix
+
+PYTHONPATH='Lib'
 
 # include paths
 
@@ -203,6 +219,45 @@ conf_data.set('HAVE_UTIME_H', compiler.check_header('utime.h'))
 conf_data.set('HAVE_DIRECT_H', compiler.check_header('direct.h'))
 conf_data.set('HAVE_IO_H', compiler.check_header('io.h'))
 conf_data.set('HAVE_PROCESS_H', compiler.check_header('process.h'))
+
+conf_data.set('HAVE_TIMEGM', compiler.has_function('timegm'))
+conf_data.set('HAVE_TIMES', compiler.has_function('times'))
+conf_data.set('HAVE_CLOCK_GETTIME', compiler.has_function('clock_gettime'))
+conf_data.set('HAVE_CLOCK', compiler.has_function('clock'))
+conf_data.set('HAVE_LSTAT', compiler.has_function('lstat'))
+conf_data.set('HAVE_LUTIMES', compiler.has_function('lutimes'))
+conf_data.set('HAVE_COPYSIGN', compiler.has_function('copysign'))
+conf_data.set('HAVE_ACOSH', compiler.has_function('acosh'))
+conf_data.set('HAVE_ASINH', compiler.has_function('asinh'))
+conf_data.set('HAVE_ATANH', compiler.has_function('atanh'))
+conf_data.set('HAVE_ERF', compiler.has_function('erf'))
+conf_data.set('HAVE_ERFC', compiler.has_function('erfc'))
+conf_data.set('HAVE_EXPM1', compiler.has_function('expm1'))
+conf_data.set('HAVE_FINITE', compiler.has_function('finite'))
+conf_data.set('HAVE_GAMMA', compiler.has_function('gamma'))
+conf_data.set('HAVE_HYPOT', compiler.has_function('hypot'))
+conf_data.set('HAVE_LGAMMA', compiler.has_function('lgamma'))
+conf_data.set('HAVE_LOG1P', compiler.has_function('log1p'))
+conf_data.set('HAVE_LOG2', compiler.has_function('log2'))
+conf_data.set('HAVE_ROUND', compiler.has_function('round'))
+conf_data.set('HAVE_TGAMMA', compiler.has_function('tgamma'))
+    
+conf_data.set('HAVE_WMEMCMP', compiler.has_function('wmemcmp'))
+conf_data.set('HAVE_REALPATH', compiler.has_function('realpath'))
+conf_data.set('HAVE_GETPPID', compiler.has_function('getppid') or compiler.has_function('getpid'))
+conf_data.set('HAVE_GETLOGIN', compiler.has_function('getlogin'))
+conf_data.set('HAVE_SPAWNV', compiler.has_function('spawnv'))
+conf_data.set('HAVE_EXECV', compiler.has_function('execv'))
+conf_data.set('HAVE_WSPAWNV', compiler.has_function('_wspawnv'))
+conf_data.set('HAVE_WEXECV', compiler.has_function('_wexecv'))
+conf_data.set('HAVE_PIPE', compiler.has_function('CreatePipe'))
+conf_data.set('HAVE_SYSTEM', compiler.has_function('system'))
+conf_data.set('HAVE_CWAIT', compiler.has_function('cwait'))
+conf_data.set('HAVE_FSYNC', compiler.has_function('fsync') or compiler.has_function('_commit'))
+conf_data.set('HAVE_COMMIT', compiler.has_function('_commit'))
+conf_data.set('HAVE_FORK', compiler.has_function('fork'))
+conf_data.set('HAVE_DLOPEN', compiler.has_function('dlopen', prefix: '#include <dlfcn.h>', args: ['-ldl']))
+
 conf_data.set('MS_WINDOWS', compiler.check_header('windows.h'))
     
 # @todo : more complex checks in configure.ac
@@ -416,8 +471,14 @@ PYTHON_OBJS += [THREADOBJ]
 # Builds minimum needed static modules
 #
 
+config_c = configure_file(
+    input: join_paths(python_source, 'Modules', 'config.c.in'),
+    output: 'config.c',
+    copy: true,
+)
+
 MODULE_OBJS = [
-#    config_c,
+    config_c,
     join_paths(python_source, 'Modules', 'main.c'),
     join_paths(python_source, 'Modules', 'gcmodule.c'),
 ]
@@ -429,7 +490,15 @@ MODULE_OBJS = [
 # This only contains the minimal set of modules required to run the
 # setup.py script in the root of the Python source tree.
 
-#posix -DPy_BUILD_CORE -I$(srcdir)/Include/internal posixmodule.c # posix (UNIX) system calls
+# posix (UNIX) system calls
+posix = static_library(
+    'posix', [
+        join_paths(python_source, 'Modules', 'posixmodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    pic : true,
+)
 #errno errnomodule.c			# posix (UNIX) errno values
 #pwd pwdmodule.c				# this is needed to find out the user's home dir
     ## if $HOME is not set
@@ -442,19 +511,54 @@ MODULE_OBJS = [
 #_abc _abc.c				# Abstract base classes
 #itertools itertoolsmodule.c		# Functions creating iterators for efficient looping
 #atexit atexitmodule.c			# Register functions to be run at interpreter-shutdown
-#_signal -DPy_BUILD_CORE -I$(srcdir)/Include/internal signalmodule.c
+_signal = static_library(
+    '_signal', [
+        join_paths(python_source, 'Modules', 'signalmodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    pic : true,
+)
 #_stat _stat.c				# stat.h interface
 #time -DPy_BUILD_CORE -I$(srcdir)/Include/internal timemodule.c	# -lm # time operations and variables
+time = static_library(
+    'time', [
+        join_paths(python_source, 'Modules', 'timemodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    pic : true,
+)
 #_thread -DPy_BUILD_CORE -I$(srcdir)/Include/internal _threadmodule.c	# low-level threading interface
 
 ## access to ISO C locale support
 #_locale -DPy_BUILD_CORE _localemodule.c  # -lintl
 
 ## Standard I/O baseline
-#_io -DPy_BUILD_CORE -I$(srcdir)/Include/internal -I$(srcdir)/Modules/_io _io/_iomodule.c _io/iobase.c _io/fileio.c _io/bytesio.c _io/bufferedio.c _io/textio.c _io/stringio.c
+_io = static_library(
+    '_io', [
+        join_paths(python_source, 'Modules', '_io', '_iomodule.c'),
+        join_paths(python_source, 'Modules', '_io', 'iobase.c'),
+        join_paths(python_source, 'Modules', '_io', 'fileio.c'),
+        join_paths(python_source, 'Modules', '_io', 'bytesio.c'),
+        join_paths(python_source, 'Modules', '_io', 'bufferedio.c'),
+        join_paths(python_source, 'Modules', '_io', 'textio.c'),
+        join_paths(python_source, 'Modules', '_io', 'stringio.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    pic : true,
+)
+#_io -I$(srcdir)/Include/internal -I$(srcdir)/Modules/_io
 
 ## faulthandler module
-#faulthandler faulthandler.c
+faulthandler = static_library(
+    'faulthandler', [
+        join_paths(python_source, 'Modules', 'faulthandler.c'),
+    ],
+    include_directories : python_include,
+    pic : true,
+)
 
 ## debug tool to trace memory blocks allocated by Python
 ##
@@ -470,13 +574,36 @@ _tracemalloc = static_library(
     pic : true,
 )
 
-MODULE_OBJS_objs = _tracemalloc.extract_objects()
-#if host_machine.system()=='windows'
-    #MODULE_OBJS += [join_paths(python_source, 'PC', 'getpathp.c')]
-    #MODULE_OBJS += [join_paths(python_source, 'PC', 'dl_nt.c')]
-#else
-    #MODULE_OBJS += [join_paths(python_source, 'Modules', 'getpath.c')]
-#endif
+dynload = static_library(
+    'dynload', [
+        join_paths(python_source, 'Python', DYNLOADFILE),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS + ['-DSOABI="'+SOABI+'"'],
+    pic : true,
+)
+
+GETPATH_SRC = []
+if host_machine.system()=='windows'
+    GETPATH_SRC += [join_paths(python_source, 'PC', 'getpathp.c')]
+    GETPATH_SRC += [join_paths(python_source, 'PC', 'dl_nt.c')]
+else
+    GETPATH_SRC += [join_paths(python_source, 'Modules', 'getpath.c')]
+endif
+
+GETPATH_C_ARGS = []
+GETPATH_C_ARGS += ['-DPREFIX="' + prefix + '"']
+GETPATH_C_ARGS += ['-DEXEC_PREFIX="' + exec_prefix + '"']
+GETPATH_C_ARGS += ['-DVERSION="' + VERSION + '"']
+GETPATH_C_ARGS += ['-DVPATH="' + VPATH + '"']
+GETPATH_C_ARGS += ['-DPYTHONPATH="' + PYTHONPATH + '"']
+
+getpath = static_library(
+    'getpath', GETPATH_SRC,
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS + GETPATH_C_ARGS,
+    pic : true,
+)
 
 MODOBJS = []
 
@@ -503,12 +630,12 @@ static_library(
     install : true,
 )
 
-#shared_library(
-#    LIBRARY,
-#    LIBRARY_OBJS,
-#    include_directories : python_include,
-#    objects: MODULE_OBJS_objs,
-#    c_args : PY_CORE_CFLAGS,
-#    install : true,
-#    dependencies : SYSLIBS + LIBS
-#)
+shared_library(
+    LIBRARY,
+    LIBRARY_OBJS ,
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    install : true,
+    link_with : [_tracemalloc, _signal, faulthandler, _io, time, platform_obj, getpath, posix, dynload],
+    dependencies : SYSLIBS + LIBS,
+)

@@ -298,6 +298,7 @@ have_dict = {
     "HAVE_CWAIT": conf.CheckFunc('cwait'),
     "HAVE_FSYNC": conf.CheckFunc('fsync') or conf.CheckFunc('_commit'),
     "HAVE_COMMIT": conf.CheckFunc('_commit'),
+    "HAVE_FORK": conf.CheckFunc('fork'),
 
     # @todo : more complex checks in configure.ac
     "HAVE_STD_ATOMIC": conf.CheckHeader('stdatomic.h'), # line 5397
