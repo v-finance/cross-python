@@ -749,7 +749,7 @@ PYTHON_OBJS = [
     os.path.join('Python', 'codecs.c'),
     os.path.join('Python', 'dynamic_annotations.c'),
     os.path.join('Python', 'errors.c'),
-    os.path.join('Python', 'frozenmain.c'),
+    #os.path.join('Python', 'frozenmain.c'),
     os.path.join('Python', 'future.c'),
     os.path.join('Python', 'getargs.c'),
     os.path.join('Python', 'getcompiler.c'),

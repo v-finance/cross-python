@@ -62,6 +62,13 @@ OPT = [
 
 if mingw
     OPT += ['-mwindows', '-municode']
+    SYSLIBS += [
+        compiler.find_library('mingw32', required : true),
+        compiler.find_library('winpthread', required : true),
+        compiler.find_library('version', required : true), 
+        compiler.find_library('ws2_32', required : true), 
+        compiler.find_library('shlwapi', required : true), 
+    ]
 endif
 
 if host_machine.system()=='windows'
@@ -255,7 +262,7 @@ conf_data.set('HAVE_SYSTEM', compiler.has_function('system'))
 conf_data.set('HAVE_CWAIT', compiler.has_function('cwait'))
 conf_data.set('HAVE_FSYNC', compiler.has_function('fsync') or compiler.has_function('_commit'))
 conf_data.set('HAVE_COMMIT', compiler.has_function('_commit'))
-conf_data.set('HAVE_FORK', compiler.has_function('fork'))
+conf_data.set('HAVE_FORK', compiler.has_function('fork') and not mingw)
 conf_data.set('HAVE_DLOPEN', compiler.has_function('dlopen', prefix: '#include <dlfcn.h>', args: ['-ldl']))
 
 conf_data.set('MS_WINDOWS', compiler.check_header('windows.h'))
@@ -419,7 +426,7 @@ foreach s : [
     'codecs.c',
     'dynamic_annotations.c',
     'errors.c',
-    'frozenmain.c',
+    #'frozenmain.c',
     'future.c',
     'getargs.c',
     'getcompiler.c',
@@ -491,14 +498,26 @@ MODULE_OBJS = [
 # setup.py script in the root of the Python source tree.
 
 # posix (UNIX) system calls
-posix = static_library(
-    'posix', [
-        join_paths(python_source, 'Modules', 'posixmodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-    pic : true,
-)
+if host_machine.system()=='windows'
+    posix = static_library(
+        'nt', [
+            join_paths(python_source, 'Modules', 'posixmodule.c'),
+        ],
+        include_directories : python_include,
+        c_args : PY_CORE_CFLAGS + ['-D_MSC_VER', '-DWINVER=0x0601', '-D_WIN32_WINNT=0x0601'],
+        pic : true,
+    )
+else
+    posix = static_library(
+        'posix', [
+            join_paths(python_source, 'Modules', 'posixmodule.c'),
+        ],
+        include_directories : python_include,
+        c_args : PY_CORE_CFLAGS,
+        pic : true,
+    )
+endif
+
 #errno errnomodule.c			# posix (UNIX) errno values
 #pwd pwdmodule.c				# this is needed to find out the user's home dir
     ## if $HOME is not set
@@ -534,17 +553,24 @@ time = static_library(
 ## access to ISO C locale support
 #_locale -DPy_BUILD_CORE _localemodule.c  # -lintl
 
+IO_SRC = [
+    join_paths(python_source, 'Modules', '_io', '_iomodule.c'),
+    join_paths(python_source, 'Modules', '_io', 'iobase.c'),
+    join_paths(python_source, 'Modules', '_io', 'fileio.c'),
+    join_paths(python_source, 'Modules', '_io', 'bytesio.c'),
+    join_paths(python_source, 'Modules', '_io', 'bufferedio.c'),
+    join_paths(python_source, 'Modules', '_io', 'textio.c'),
+    join_paths(python_source, 'Modules', '_io', 'stringio.c'),
+]
+if host_machine.system()=='windows'
+    IO_SRC += [
+        join_paths(python_source, 'Modules', '_io', 'winconsoleio.c'),
+    ]
+endif
+
 ## Standard I/O baseline
 _io = static_library(
-    '_io', [
-        join_paths(python_source, 'Modules', '_io', '_iomodule.c'),
-        join_paths(python_source, 'Modules', '_io', 'iobase.c'),
-        join_paths(python_source, 'Modules', '_io', 'fileio.c'),
-        join_paths(python_source, 'Modules', '_io', 'bytesio.c'),
-        join_paths(python_source, 'Modules', '_io', 'bufferedio.c'),
-        join_paths(python_source, 'Modules', '_io', 'textio.c'),
-        join_paths(python_source, 'Modules', '_io', 'stringio.c'),
-    ],
+    '_io', IO_SRC,
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     pic : true,
@@ -619,7 +645,13 @@ LIBRARY_OBJS_OMIT_FROZEN += MODOBJS
 LIBRARY_OBJS = LIBRARY_OBJS_OMIT_FROZEN + [
     join_paths(python_source, 'Python', 'frozen.c')
 ]
-
+if host_machine.system()=='windows'
+    LIBRARY_OBJS += [
+        #join_paths(python_source, 'PC', 'frozen_dllmain.c'),
+    ]
+endif
+        
+        
 static_library(
     LIBRARY,
     LIBRARY_OBJS,
