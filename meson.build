@@ -131,7 +131,8 @@ conf_data.set('_PYTHONFRAMEWORK', '""')
 
 # check size of data types
 
-conf_data.set('SIZEOF_WCHAR_T', compiler.sizeof('wchar_t', prefix : '#include <sys/types.h>'))
+#conf_data.set('SIZEOF_WCHAR_T', compiler.sizeof('wchar_t', prefix : '#include <sys/types.h>') or compiler.sizeof('wchar_t', prefix : '#include <wchar.h>'))
+conf_data.set('SIZEOF_WCHAR_T', compiler.sizeof('wchar_t', prefix : '#include <wchar.h>'))
 conf_data.set('SIZEOF_DOUBLE', compiler.sizeof('double'))
 conf_data.set('SIZEOF_FLOAT', compiler.sizeof('float'))
 conf_data.set('SIZEOF_FPOS_T', compiler.sizeof('fpos_t'))
@@ -141,11 +142,12 @@ conf_data.set('SIZEOF_LONG_DOUBLE', compiler.sizeof('long double'))
 conf_data.set('SIZEOF_LONG_LONG', compiler.sizeof('long long'))
 conf_data.set('SIZEOF_OFF_T', compiler.sizeof('off_t'))
 conf_data.set('SIZEOF_PID_T', compiler.sizeof('pid_t', prefix : '#include <sys/types.h>'))
-conf_data.set('SIZEOF_PTHREAD_T', compiler.sizeof('pthread_t'))
+conf_data.set('SIZEOF_PTHREAD_KEY_T', compiler.sizeof('pthread_key_t', prefix : '#include <pthread.h>'))
+conf_data.set('SIZEOF_PTHREAD_T', compiler.sizeof('pthread_t', prefix : '#include <pthread.h>'))
 conf_data.set('SIZEOF_SHORT', compiler.sizeof('short'))
 conf_data.set('SIZEOF_SIZE_T', compiler.sizeof('size_t'))
-conf_data.set('SIZEOF_TIME_T', compiler.sizeof('time_t'))
-conf_data.set('SIZEOF_UINTPTR_T', compiler.sizeof('uintptr_t'))
+conf_data.set('SIZEOF_TIME_T', compiler.sizeof('time_t', prefix : '#include <time.h>'))
+conf_data.set('SIZEOF_UINTPTR_T', compiler.sizeof('uintptr_t', prefix: '#include <stdint.h>,'))
 conf_data.set('SIZEOF_VOID_P', compiler.sizeof('void *'))
 conf_data.set('SIZEOF__BOOL', compiler.sizeof('_Bool'))
 
@@ -530,13 +532,15 @@ MODOBJS += [[static_library(
 
 # this is needed to find out the user's home dir
 ## if $HOME is not set
-MODOBJS += [[static_library(
-    'pwd', [
-        join_paths(python_source, 'Modules', 'pwdmodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-), 'pwd']]
+if compiler.check_header('pwd.h')
+    MODOBJS += [[static_library(
+        'pwd', [
+            join_paths(python_source, 'Modules', 'pwdmodule.c'),
+        ],
+        include_directories : python_include,
+        c_args : PY_CORE_CFLAGS,
+    ), 'pwd']]
+endif
 
 # Fredrik Lundh's new regular expressions
 MODOBJS += [[static_library(
@@ -651,6 +655,23 @@ MODOBJS += [[static_library(
 
 ## access to ISO C locale support
 #_locale -DPy_BUILD_CORE _localemodule.c  # -lintl
+MODOBJS += [[static_library(
+    '_locale', [
+        join_paths(python_source, 'Modules', '_localemodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    pic : true,
+), '_locale']]
+
+MODOBJS += [[static_library(
+    'unicodedata', [
+        join_paths(python_source, 'Modules', 'unicodedata.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    pic : true,
+), 'unicodedata']]
 
 IO_SRC = [
     join_paths(python_source, 'Modules', '_io', '_iomodule.c'),
@@ -808,7 +829,7 @@ libpython = shared_library(
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     install : true,
-    link_with : MODLIBS + [dynload, getpath, platform_obj], #[_tracemalloc, _signal, faulthandler, _io, time, platform_obj,  posix, dynload, _thread],
+    link_with : MODLIBS + [dynload, getpath, platform_obj],
     dependencies : SYSLIBS + LIBS,
 )
 
