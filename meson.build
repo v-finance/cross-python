@@ -688,23 +688,12 @@ if host_machine.system()=='windows'
     ]
 endif
         
-        
-static_library(
-    LIBRARY,
-    LIBRARY_OBJS,
-    include_directories : python_include,
-    objects: platform_obj.extract_objects(),
-    c_args : PY_CORE_CFLAGS,
-    pic : true,
-    install : true,
-)
-
 MODLIBS = []
 foreach mod:MODOBJS
     MODLIBS += mod[0]
 endforeach
 
-libpython = shared_library(
+libpython = both_libraries(
     LIBRARY,
     LIBRARY_OBJS ,
     include_directories : python_include,
@@ -727,6 +716,6 @@ executable(
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     install : true,
-    link_with : [libpython],
+    link_with : [libpython.get_shared_lib()],
     dependencies : SYSLIBS + LIBS,
 )
