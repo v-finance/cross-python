@@ -12,6 +12,13 @@ compiler = meson.get_compiler('c')
 mingw = compiler.get_id()=='gcc' and host_machine.system()=='windows'
 
 #
+# PROGRAM DETECTION
+#
+
+cat = find_program('cat')
+echo = find_program('echo')
+
+#
 # COMPILER OPTIONS
 #
 
@@ -479,18 +486,6 @@ PYTHON_OBJS += [THREADOBJ]
 # Builds minimum needed static modules
 #
 
-config_c = configure_file(
-    input: join_paths(python_source, 'Modules', 'config.c.in'),
-    output: 'config.c',
-    copy: true,
-)
-
-MODULE_OBJS = [
-    config_c,
-    join_paths(python_source, 'Modules', 'main.c'),
-    join_paths(python_source, 'Modules', 'gcmodule.c'),
-]
-
 # The modules listed here can't be built as shared libraries for
 # various reasons; therefore they are listed here instead of in the
 # normal order.
@@ -499,6 +494,9 @@ MODULE_OBJS = [
 # setup.py script in the root of the Python source tree.
 
 # posix (UNIX) system calls
+
+MODOBJS = []
+
 if host_machine.system()=='windows'
     posix = static_library(
         'nt', [
@@ -508,6 +506,7 @@ if host_machine.system()=='windows'
         c_args : PY_CORE_CFLAGS + ['-D_MSC_VER', '-DWINVER=0x0601', '-D_WIN32_WINNT=0x0601'],
         pic : true,
     )
+    MODOBJS += [[posix, 'nt']]
 else
     posix = static_library(
         'posix', [
@@ -517,39 +516,138 @@ else
         c_args : PY_CORE_CFLAGS,
         pic : true,
     )
+    MODOBJS += [[posix, 'posix']]
 endif
 
 #errno errnomodule.c			# posix (UNIX) errno values
-#pwd pwdmodule.c				# this is needed to find out the user's home dir
-    ## if $HOME is not set
-#_sre _sre.c				# Fredrik Lundh's new regular expressions
-#_codecs _codecsmodule.c			# access to the builtin codecs and codec registry
-#_weakref _weakref.c			# weak references
-#_functools -DPy_BUILD_CORE -I$(srcdir)/Include/internal _functoolsmodule.c   # Tools for working with functions and callable objects
-#_operator _operator.c	        	# operator.add() and similar goodies
-#_collections _collectionsmodule.c	# Container types
-#_abc _abc.c				# Abstract base classes
-#itertools itertoolsmodule.c		# Functions creating iterators for efficient looping
-#atexit atexitmodule.c			# Register functions to be run at interpreter-shutdown
-_signal = static_library(
+MODOBJS += [[static_library(
+    'errno', [
+        join_paths(python_source, 'Modules', 'errnomodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+), 'errno']]
+
+# this is needed to find out the user's home dir
+## if $HOME is not set
+MODOBJS += [[static_library(
+    'pwd', [
+        join_paths(python_source, 'Modules', 'pwdmodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+), 'pwd']]
+
+# Fredrik Lundh's new regular expressions
+MODOBJS += [[static_library(
+    '_sre', [
+        join_paths(python_source, 'Modules', '_sre.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+), '_sre']]
+
+# access to the builtin codecs and codec registry
+MODOBJS += [[static_library(
+    '_codecs', [
+        join_paths(python_source, 'Modules', '_codecsmodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+), '_codecs']]
+
+# weak references
+MODOBJS += [[static_library(
+    '_weakref', [
+        join_paths(python_source, 'Modules', '_weakref.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+), '_weakref']]
+
+# Tools for working with functions and callable objects
+MODOBJS += [[static_library(
+    '_functools', [
+        join_paths(python_source, 'Modules', '_functoolsmodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+), '_functools']]
+
+# operator.add() and similar goodies
+MODOBJS += [[static_library(
+    '_operator', [
+        join_paths(python_source, 'Modules', '_operator.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+), '_operator']]
+
+# Container types
+MODOBJS += [[static_library(
+    '_collections', [
+        join_paths(python_source, 'Modules', '_collectionsmodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+), '_collections']]
+
+# Abstract base classes
+MODOBJS += [[static_library(
+    '_abc', [
+        join_paths(python_source, 'Modules', '_abc.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+), '_abc']]
+
+# Functions creating iterators for efficient looping
+MODOBJS += [[static_library(
+    'itertools', [
+        join_paths(python_source, 'Modules', 'itertoolsmodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+), 'itertools']]
+
+# Register functions to be run at interpreter-shutdown
+MODOBJS += [[static_library(
+    'atexit', [
+        join_paths(python_source, 'Modules', 'atexitmodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+), 'atexit']]
+
+MODOBJS += [[static_library(
     '_signal', [
         join_paths(python_source, 'Modules', 'signalmodule.c'),
     ],
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     pic : true,
-)
+), '_signal']]
+
 #_stat _stat.c				# stat.h interface
 #time -DPy_BUILD_CORE -I$(srcdir)/Include/internal timemodule.c	# -lm # time operations and variables
-time = static_library(
+MODOBJS += [[static_library(
     'time', [
         join_paths(python_source, 'Modules', 'timemodule.c'),
     ],
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     pic : true,
-)
-#_thread -DPy_BUILD_CORE -I$(srcdir)/Include/internal _threadmodule.c	# low-level threading interface
+), 'time']]
+
+# low-level threading interface
+MODOBJS += [[static_library(
+    '_thread', [
+        join_paths(python_source, 'Modules', '_threadmodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    pic : true,
+), '_thread']]
 
 ## access to ISO C locale support
 #_locale -DPy_BUILD_CORE _localemodule.c  # -lintl
@@ -570,28 +668,28 @@ if host_machine.system()=='windows'
 endif
 
 ## Standard I/O baseline
-_io = static_library(
+MODOBJS += [[static_library(
     '_io', IO_SRC,
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     pic : true,
-)
+), '_io']]
 #_io -I$(srcdir)/Include/internal -I$(srcdir)/Modules/_io
 
 ## faulthandler module
-faulthandler = static_library(
+MODOBJS += [[static_library(
     'faulthandler', [
         join_paths(python_source, 'Modules', 'faulthandler.c'),
     ],
     include_directories : python_include,
     pic : true,
-)
+), 'faulthandler']]
 
 ## debug tool to trace memory blocks allocated by Python
 ##
 ## bpo-35053: The module must be builtin since _Py_NewReference()
 ## can call _PyTraceMalloc_NewReference(). hashtable.c
-_tracemalloc = static_library(
+MODOBJS += [[static_library(
     '_tracemalloc', [
         join_paths(python_source, 'Modules', '_tracemalloc.c'),
         join_paths(python_source, 'Modules', 'hashtable.c'),
@@ -599,7 +697,7 @@ _tracemalloc = static_library(
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     pic : true,
-)
+), '_tracemalloc']]
 
 dynload = static_library(
     'dynload', [
@@ -632,7 +730,44 @@ getpath = static_library(
     pic : true,
 )
 
-MODOBJS = []
+#
+# this is a replacement for the makesetup script, to manipulate 'config.c.in'
+# and replace the markers with references to the build in modules
+#
+
+config_c_in = run_command(
+    cat, [join_paths(python_source, 'Modules', 'config.c.in')],
+  ).stdout()
+  
+config_c_in_lines = config_c_in.split('\n')
+config_c_out_lines = []
+
+foreach line: config_c_in_lines
+    config_c_out_lines += [line, '\n']
+    if line.startswith('/* -- ADDMODULE MARKER 1')
+        foreach mod:MODOBJS
+            config_c_out_lines += ['extern PyObject* PyInit_@0@(void);\n'.format(mod[-1])]
+        endforeach
+    endif
+    if line.startswith('/* -- ADDMODULE MARKER 2')
+        foreach mod:MODOBJS
+            config_c_out_lines += ['{ "@0@", PyInit_@0@ },\n'.format(mod[-1])]
+        endforeach
+    endif        
+endforeach
+
+config_c_generator = generator(
+    echo,
+    output  : '@BASENAME@.c',
+    arguments : config_c_out_lines,
+    capture: true,
+)
+
+MODULE_OBJS = [
+    config_c_generator.process(join_paths(python_source, 'Modules', 'config.c.in')),
+    join_paths(python_source, 'Modules', 'main.c'),
+    join_paths(python_source, 'Modules', 'gcmodule.c'),
+]
 
 LIBRARY_OBJS_OMIT_FROZEN = [
     join_paths(python_source, 'Modules', 'getbuildinfo.c')
@@ -641,7 +776,6 @@ LIBRARY_OBJS_OMIT_FROZEN += PARSER_OBJS
 LIBRARY_OBJS_OMIT_FROZEN += OBJECT_OBJS
 LIBRARY_OBJS_OMIT_FROZEN += PYTHON_OBJS
 LIBRARY_OBJS_OMIT_FROZEN += MODULE_OBJS
-LIBRARY_OBJS_OMIT_FROZEN += MODOBJS
 
 LIBRARY_OBJS = LIBRARY_OBJS_OMIT_FROZEN + [
     join_paths(python_source, 'Python', 'frozen.c')
@@ -663,13 +797,18 @@ static_library(
     install : true,
 )
 
+MODLIBS = []
+foreach mod:MODOBJS
+    MODLIBS += mod[0]
+endforeach
+
 libpython = shared_library(
     LIBRARY,
     LIBRARY_OBJS ,
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     install : true,
-    link_with : [_tracemalloc, _signal, faulthandler, _io, time, platform_obj, getpath, posix, dynload],
+    link_with : MODLIBS + [dynload, getpath, platform_obj], #[_tracemalloc, _signal, faulthandler, _io, time, platform_obj,  posix, dynload, _thread],
     dependencies : SYSLIBS + LIBS,
 )
 
