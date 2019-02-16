@@ -495,10 +495,11 @@ PYTHON_OBJS += [THREADOBJ]
 # This only contains the minimal set of modules required to run the
 # setup.py script in the root of the Python source tree.
 
-# posix (UNIX) system calls
-
+# a list of pairs (static_library, module name) to ease inclusion
+# in config.c
 MODOBJS = []
 
+# posix (UNIX) system calls
 if host_machine.system()=='windows'
     posix = static_library(
         'nt', [
@@ -506,7 +507,6 @@ if host_machine.system()=='windows'
         ],
         include_directories : python_include,
         c_args : PY_CORE_CFLAGS + ['-D_MSC_VER', '-DWINVER=0x0601', '-D_WIN32_WINNT=0x0601'],
-        pic : true,
     )
     MODOBJS += [[posix, 'nt']]
 else
@@ -516,209 +516,90 @@ else
         ],
         include_directories : python_include,
         c_args : PY_CORE_CFLAGS,
-        pic : true,
     )
     MODOBJS += [[posix, 'posix']]
 endif
 
-#errno errnomodule.c			# posix (UNIX) errno values
-MODOBJS += [[static_library(
-    'errno', [
-        join_paths(python_source, 'Modules', 'errnomodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-), 'errno']]
+# a list of pairs (module name, module sources) to ease the creation
+# of MODOBJS
+MODSOURCES = []
 
+#errno errnomodule.c			# posix (UNIX) errno values
+MODSOURCES += [['errno', ['errnomodule.c'],]]
 # this is needed to find out the user's home dir
 ## if $HOME is not set
 if compiler.check_header('pwd.h')
-    MODOBJS += [[static_library(
-        'pwd', [
-            join_paths(python_source, 'Modules', 'pwdmodule.c'),
-        ],
-        include_directories : python_include,
-        c_args : PY_CORE_CFLAGS,
-    ), 'pwd']]
+    MODSOURCES += [['pwd', ['pwdmodule.c'],]]
 endif
 
 # Fredrik Lundh's new regular expressions
-MODOBJS += [[static_library(
-    '_sre', [
-        join_paths(python_source, 'Modules', '_sre.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-), '_sre']]
-
+MODSOURCES += [['_sre', ['_sre.c'],]]
 # access to the builtin codecs and codec registry
-MODOBJS += [[static_library(
-    '_codecs', [
-        join_paths(python_source, 'Modules', '_codecsmodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-), '_codecs']]
-
+MODSOURCES += [['_codecs', ['_codecsmodule.c'],]]
 # weak references
-MODOBJS += [[static_library(
-    '_weakref', [
-        join_paths(python_source, 'Modules', '_weakref.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-), '_weakref']]
-
+MODSOURCES += [['_weakref', ['_weakref.c'],]]
 # Tools for working with functions and callable objects
-MODOBJS += [[static_library(
-    '_functools', [
-        join_paths(python_source, 'Modules', '_functoolsmodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-), '_functools']]
-
+MODSOURCES += [['_functools', ['_functoolsmodule.c'],]]
 # operator.add() and similar goodies
-MODOBJS += [[static_library(
-    '_operator', [
-        join_paths(python_source, 'Modules', '_operator.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-), '_operator']]
-
+MODSOURCES += [['_operator', ['_operator.c'],]]
 # Container types
-MODOBJS += [[static_library(
-    '_collections', [
-        join_paths(python_source, 'Modules', '_collectionsmodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-), '_collections']]
-
+MODSOURCES += [['_collections', ['_collectionsmodule.c'],]]
 # Abstract base classes
-MODOBJS += [[static_library(
-    '_abc', [
-        join_paths(python_source, 'Modules', '_abc.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-), '_abc']]
-
+MODSOURCES += [['_abc', ['_abc.c'],]]
 # Functions creating iterators for efficient looping
-MODOBJS += [[static_library(
-    'itertools', [
-        join_paths(python_source, 'Modules', 'itertoolsmodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-), 'itertools']]
-
+MODSOURCES += [['itertools', ['itertoolsmodule.c'],]]
 # Register functions to be run at interpreter-shutdown
-MODOBJS += [[static_library(
-    'atexit', [
-        join_paths(python_source, 'Modules', 'atexitmodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-), 'atexit']]
-
-MODOBJS += [[static_library(
-    '_signal', [
-        join_paths(python_source, 'Modules', 'signalmodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-    pic : true,
-), '_signal']]
-
-#_stat _stat.c				# stat.h interface
+MODSOURCES += [['atexit', ['atexitmodule.c'],]]
+MODSOURCES += [['_signal', ['signalmodule.c'],]]
+# stat.h interface
+MODSOURCES += [['_stat', ['_stat.c'],]]
 #time -DPy_BUILD_CORE -I$(srcdir)/Include/internal timemodule.c	# -lm # time operations and variables
-MODOBJS += [[static_library(
-    'time', [
-        join_paths(python_source, 'Modules', 'timemodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-    pic : true,
-), 'time']]
-
+MODSOURCES += [['time', ['timemodule.c'],]]
 # low-level threading interface
-MODOBJS += [[static_library(
-    '_thread', [
-        join_paths(python_source, 'Modules', '_threadmodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-    pic : true,
-), '_thread']]
-
+MODSOURCES += [['_thread', ['_threadmodule.c'],]]
 ## access to ISO C locale support
 #_locale -DPy_BUILD_CORE _localemodule.c  # -lintl
-MODOBJS += [[static_library(
-    '_locale', [
-        join_paths(python_source, 'Modules', '_localemodule.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-    pic : true,
-), '_locale']]
-
-MODOBJS += [[static_library(
-    'unicodedata', [
-        join_paths(python_source, 'Modules', 'unicodedata.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-    pic : true,
-), 'unicodedata']]
-
-IO_SRC = [
-    join_paths(python_source, 'Modules', '_io', '_iomodule.c'),
-    join_paths(python_source, 'Modules', '_io', 'iobase.c'),
-    join_paths(python_source, 'Modules', '_io', 'fileio.c'),
-    join_paths(python_source, 'Modules', '_io', 'bytesio.c'),
-    join_paths(python_source, 'Modules', '_io', 'bufferedio.c'),
-    join_paths(python_source, 'Modules', '_io', 'textio.c'),
-    join_paths(python_source, 'Modules', '_io', 'stringio.c'),
-]
-if host_machine.system()=='windows'
-    IO_SRC += [
-        join_paths(python_source, 'Modules', '_io', 'winconsoleio.c'),
-    ]
-endif
-
-## Standard I/O baseline
-MODOBJS += [[static_library(
-    '_io', IO_SRC,
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-    pic : true,
-), '_io']]
-#_io -I$(srcdir)/Include/internal -I$(srcdir)/Modules/_io
-
+MODSOURCES += [['_locale', ['_localemodule.c'],]]
+MODSOURCES += [['unicodedata', ['unicodedata.c'],]]
 ## faulthandler module
-MODOBJS += [[static_library(
-    'faulthandler', [
-        join_paths(python_source, 'Modules', 'faulthandler.c'),
-    ],
-    include_directories : python_include,
-    pic : true,
-), 'faulthandler']]
-
+MODSOURCES += [['faulthandler', ['faulthandler.c'],]]
 ## debug tool to trace memory blocks allocated by Python
 ##
 ## bpo-35053: The module must be builtin since _Py_NewReference()
 ## can call _PyTraceMalloc_NewReference(). hashtable.c
-MODOBJS += [[static_library(
-    '_tracemalloc', [
-        join_paths(python_source, 'Modules', '_tracemalloc.c'),
-        join_paths(python_source, 'Modules', 'hashtable.c'),
-    ],
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-    pic : true,
-), '_tracemalloc']]
+MODSOURCES += [['_tracemalloc', ['_tracemalloc.c', 'hashtable.c'],]]
+
+IO_SRC = [
+    join_paths('_io', '_iomodule.c'),
+    join_paths('_io', 'iobase.c'),
+    join_paths('_io', 'fileio.c'),
+    join_paths('_io', 'bytesio.c'),
+    join_paths('_io', 'bufferedio.c'),
+    join_paths('_io', 'textio.c'),
+    join_paths('_io', 'stringio.c'),
+]
+if host_machine.system()=='windows'
+    IO_SRC += [
+        join_paths('_io', 'winconsoleio.c'),
+    ]
+endif
+
+## Standard I/O baseline
+MODSOURCES += [['_io', IO_SRC,]]
+
+# convert MOSOURCES into MODOBJS
+foreach modsource:MODSOURCES
+    sources = []
+    foreach s:modsource[1]
+        sources += [join_paths(python_source, 'Modules', s)]
+    endforeach
+    modlib = static_library(
+        modsource[0], sources,
+        include_directories : python_include,
+        c_args : PY_CORE_CFLAGS,
+    )
+    MODOBJS += [[modlib, modsource[0]]]
+endforeach
 
 dynload = static_library(
     'dynload', [
