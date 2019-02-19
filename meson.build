@@ -2,12 +2,9 @@ project('cross-python', 'c')
 
 python_source = get_option('source')
 
-VERSION = '3.8'
-
 #
 # COMPILER DETECTION
 #
-
 compiler = meson.get_compiler('c')
 mingw = compiler.get_id()=='gcc' and host_machine.system()=='windows'
 
@@ -17,10 +14,17 @@ mingw = compiler.get_id()=='gcc' and host_machine.system()=='windows'
 
 cat = find_program('cat')
 echo = find_program('echo')
+version = find_program('version.sh')
 
 #
 # COMPILER OPTIONS
 #
+
+VERSION = run_command(
+    version, [join_paths(python_source, 'configure.ac')],
+  ).stdout()
+
+warning(VERSION)
 
 SOABI=		'cpython-36m-x86_64-linux-gnu'
 VPATH=          'sourcedir'
@@ -587,7 +591,7 @@ endif
 ## Standard I/O baseline
 MODSOURCES += [['_io', IO_SRC,]]
 
-# convert MOSOURCES into MODOBJS
+# convert MODSOURCES into MODOBJS
 foreach modsource:MODSOURCES
     sources = []
     foreach s:modsource[1]
