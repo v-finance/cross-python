@@ -4,6 +4,7 @@ cpp = 'x86_64-w64-mingw32-gcc-win32'
 ar = 'x86_64-w64-mingw32-ar'
 strip = '/usr/i586-mingw32msvc/bin/strip'
 pkgconfig = '/usr/bin/i586-mingw32msvc-pkg-config'
+windres = '/usr/bin/x86_64-w64-mingw32-windres'
 exe_wrapper = 'wine' # A command used to run generated executables.
 
 [host_machine]

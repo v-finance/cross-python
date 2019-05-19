@@ -18,6 +18,15 @@ version = find_program('version.sh')
 zip = find_program('zip')
 
 #
+# Dependencies
+#
+# Can be found in PCBuild/get_externals.bat
+#
+
+zlib_subproject = subproject('zlib')
+zlib_dep = zlib_subproject.get_variable('zlib_dep')
+
+#
 # COMPILER OPTIONS
 #
 
@@ -545,6 +554,20 @@ else
     )
     MODOBJS += [[posix, 'posix']]
 endif
+
+zlib_includes = []
+zlib_includes += zlib_subproject.get_variable('incdir')
+zlib_includes += python_include
+
+zlib = static_library(
+    'zlib', [
+        join_paths(python_source, 'Modules', 'zlibmodule.c'),
+    ],
+    include_directories : zlib_includes,
+    link_with: zlib_subproject.get_variable('zlib'),
+    c_args : PY_CORE_CFLAGS,
+)
+MODOBJS += [[zlib, 'zlib']]
 
 # a list of pairs (module name, module sources) to ease the creation
 # of MODOBJS
