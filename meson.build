@@ -15,6 +15,7 @@ mingw = compiler.get_id()=='gcc' and host_machine.system()=='windows'
 cat = find_program('cat')
 echo = find_program('echo')
 version = find_program('version.sh')
+zip = find_program('zip')
 
 #
 # COMPILER OPTIONS
@@ -526,6 +527,14 @@ if host_machine.system()=='windows'
         c_args : PY_CORE_CFLAGS + ['-D_MSC_VER', '-DWINVER=0x0601', '-D_WIN32_WINNT=0x0601'],
     )
     MODOBJS += [[posix, 'nt']]
+    winreg = static_library(
+        'winreg', [
+            join_paths(python_source, 'PC', 'winreg.c'),
+        ],
+        include_directories : python_include,
+        c_args : PY_CORE_CFLAGS,# + ['-D_MSC_VER', '-DWINVER=0x0601', '-D_WIN32_WINNT=0x0601'],
+    )
+    MODOBJS += [[winreg, 'winreg']]
 else
     posix = static_library(
         'posix', [
@@ -736,3 +745,35 @@ executable(
     link_with : [libpython.get_shared_lib()],
     dependencies : SYSLIBS + LIBS,
 )
+
+#
+# Include the standard library as a zipfile
+#
+
+#install_subdir('Lib', install_dir: '')
+
+#standard_library_zip = custom_target(
+    #'python.zip',
+    #output : 'python.zip',
+    #input : join_paths(python_source, 'Lib'),
+    #command : ['cd', '@INPUT@', '&&', zip, join_paths(meson.current_build_dir(),'@OUTPUT@'), '-r', '.'],
+    #install: true,
+    #install_dir: '',
+#)
+
+#standard_library_path = custom_target(
+    #'python._pth',
+    #output : 'python._pth',
+    #command : ['"python.zip\n."', '>', '@OUTPUT@'],
+    #install: true,
+    #install_dir: '',
+#)
+
+#path_generator = generator(
+    #echo,
+    #output  : '@BASENAME@._pth',
+    #arguments : ['python.zip', '.'],
+    #capture: true,
+#)
+
+#path_generator.process(standard_library_path[0], install: true)
