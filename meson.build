@@ -759,7 +759,7 @@ if host_machine.system()=='windows'
     ]
 endif
 
-executable(
+python_exe = executable(
     'python',
     PYTHON_SRC,
     include_directories : python_include,
@@ -770,33 +770,20 @@ executable(
 )
 
 #
-# Include the standard library as a zipfile
+# Install the standard library
 #
 
-#install_subdir('Lib', install_dir: '')
+install_subdir(
+    join_paths(python_source, 'Lib'),
+    install_dir: join_paths(get_option('bindir'), 'Lib'),
+    strip_directory : true
+)
 
-#standard_library_zip = custom_target(
-    #'python.zip',
-    #output : 'python.zip',
-    #input : join_paths(python_source, 'Lib'),
-    #command : ['cd', '@INPUT@', '&&', zip, join_paths(meson.current_build_dir(),'@OUTPUT@'), '-r', '.'],
-    #install: true,
-    #install_dir: '',
-#)
-
-#standard_library_path = custom_target(
-    #'python._pth',
-    #output : 'python._pth',
-    #command : ['"python.zip\n."', '>', '@OUTPUT@'],
-    #install: true,
-    #install_dir: '',
-#)
-
-#path_generator = generator(
-    #echo,
-    #output  : '@BASENAME@._pth',
-    #arguments : ['python.zip', '.'],
-    #capture: true,
-#)
-
-#path_generator.process(standard_library_path[0], install: true)
+custom_target(
+    'python._pth',
+    command : [echo, 'Lib', '.'],
+    output  : 'python._pth',
+    capture: true,
+    install_dir: get_option('bindir'),
+    install: true
+)

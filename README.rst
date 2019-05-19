@@ -53,6 +53,8 @@ Windows (mingw)
 
 Start the build script by using a cross-file ::
 
-    meson -Dsource=../cpython --cross-file cross-files/i686-w64-mingw32.txt builddir-i686-w64-mingw32
+    meson -Dsource=../cpython --cross-file cross-files/i686-w64-mingw32.txt --prefix="${PWD}/i686-w64-mingw32" builddir-i686-w64-mingw32
     ninja -C builddir-i686-w64-mingw32
+    ninja -C builddir-i686-w64-mingw32 install
+    
 
