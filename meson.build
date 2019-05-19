@@ -781,7 +781,7 @@ install_subdir(
 
 custom_target(
     'python._pth',
-    command : [echo, 'Lib', '.'],
+    command : [echo, '-e', 'Lib\n.'],
     output  : 'python._pth',
     capture: true,
     install_dir: get_option('bindir'),
