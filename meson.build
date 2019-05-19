@@ -20,6 +20,14 @@ version = find_program('version.sh')
 # COMPILER OPTIONS
 #
 
+# PLAFORM TRIPLET
+
+
+#elif defined(__linux__)
+# if defined(__x86_64__) && defined(__LP64__)
+#        x86_64-linux-gnu
+
+        
 VERSION = run_command(
     version, [join_paths(python_source, 'configure.ac')],
   ).stdout()
@@ -314,6 +322,7 @@ configure_file(
 #
 # PARSER GENERATOR
 #
+# list off files can be found in Makefile.pre.in
 
 POBJS = []
 foreach s : [
@@ -322,12 +331,7 @@ foreach s : [
     'listnode.c',
     'node.c',
     'parser.c',
-    'bitset.c',
-    'metagrammar.c',
-    'firstsets.c',
-    'grammar.c',
     'token.c',
-    'pgen.c',
     ]
     POBJS += join_paths(python_source, 'Parser', s)
 endforeach
@@ -390,6 +394,7 @@ foreach s : [
     'floatobject.c',
     'frameobject.c',
     'funcobject.c',
+    'interpreteridobject.c',
     'iterobject.c',
     'listobject.c',
     'longobject.c',
@@ -423,6 +428,11 @@ platform_obj = static_library(
     pic : true,
 )
 
+#
+# Python
+#
+# list off files can be found in Makefile.pre.in
+
 PYTHON_OBJS = []
 foreach s : [
     '_warnings.c',
@@ -431,7 +441,6 @@ foreach s : [
     'ast.c',
     'ast_opt.c',
     'ast_unparse.c',
-    'bootstrap_hash.c',
     'bltinmodule.c',
     'coreconfig.c',
     'ceval.c',
@@ -456,6 +465,7 @@ foreach s : [
     'mysnprintf.c',
     'pathconfig.c',
     'peephole.c',
+    'preconfig.c',
     'pyarena.c',
     'pyctype.c',
     'pyfpe.c',
@@ -463,8 +473,11 @@ foreach s : [
     'pylifecycle.c',
     'pymath.c',
     'pystate.c',
+    'context.c',
+    'hamt.c',
     'pythonrun.c',
     'pytime.c',
+    'bootstrap_hash.c',
     'structmember.c',
     'symtable.c',
     'sysmodule.c',
