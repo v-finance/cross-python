@@ -47,9 +47,10 @@ warning(VERSION)
 SOABI=		'cpython-36m-x86_64-linux-gnu'
 VPATH=          'sourcedir'
 
-LIBS=		[
-    dependency('threads'),
-]
+LIBS=		[]
+if host_machine.system() != 'windows'
+    LIBS += [dependency('threads'),]
+endif
 LIBM=		[compiler.find_library('m', required : false)]
 LIBC=		[]
 SYSLIBS=	LIBM + LIBC
@@ -94,7 +95,6 @@ if mingw
     add_project_link_arguments('-municode', '-mwindows', language:'c')
     SYSLIBS += [
         compiler.find_library('mingw32', required : true),
-        compiler.find_library('winpthread', required : true),
         compiler.find_library('version', required : true), 
         compiler.find_library('ws2_32', required : true), 
         compiler.find_library('shlwapi', required : true), 
@@ -307,11 +307,8 @@ conf_data.set('TM_IN_SYS_TIME', 0)
 conf_data.set('SYS_SELECT_WITH_SYS_TIME', compiler.check_header('sys/select.h') and compiler.check_header('sys/time.h'))
 conf_data.set('TIME_WITH_SYS_TIME', compiler.check_header('time.h') and compiler.check_header('sys/time.h'))
 conf_data.set('HAVE_DYNAMIC_LOADING', 0)
-# According to the POSIX spec, a pthreads implementation must
-# define _POSIX_THREADS in unistd.h. This does not seems to be the case
-# for mingw
-conf_data.set('_POSIX_THREADS', compiler.check_header('pthread.h'))
-    
+conf_data.set('NT_THREADS', compiler.check_header('windows.h'))
+
 if host_machine.system()=='windows'
     conf_data.set('MAX_PATH', 260)
 endif
