@@ -30,4 +30,4 @@ pipelines:
           - ninja -C builddir-i686-w64-mingw32 install
           - cd i686-w64-mingw32; zip ../python-master-i686-w64-mingw32.zip -r *
         artifacts:
-          - *.zip
+          - "*.zip"
