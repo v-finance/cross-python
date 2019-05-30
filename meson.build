@@ -298,6 +298,7 @@ conf_data.set('HAVE_FORK', compiler.has_function('fork') and not mingw)
 conf_data.set('HAVE_DLOPEN', compiler.has_function('dlopen', prefix: '#include <dlfcn.h>', args: ['-ldl']))
 
 conf_data.set('MS_WINDOWS', compiler.check_header('windows.h'))
+conf_data.set('NT_THREADS', compiler.check_header('windows.h'))
     
 # @todo : more complex checks in configure.ac
 conf_data.set('HAVE_STD_ATOMIC', compiler.check_header('stdatomic.h')) # line 5397
@@ -306,8 +307,10 @@ conf_data.set('HAVE_STDARG_PROTOTYPES', compiler.check_header('stdarg.h')) # lin
 conf_data.set('TM_IN_SYS_TIME', 0)
 conf_data.set('SYS_SELECT_WITH_SYS_TIME', compiler.check_header('sys/select.h') and compiler.check_header('sys/time.h'))
 conf_data.set('TIME_WITH_SYS_TIME', compiler.check_header('time.h') and compiler.check_header('sys/time.h'))
+conf_data.set('HAVE_DECL_TZNAME', compiler.check_header('time.h'))
+conf_data.set('HAVE_TZNAME', compiler.check_header('time.h'))
 conf_data.set('HAVE_DYNAMIC_LOADING', 0)
-conf_data.set('NT_THREADS', compiler.check_header('windows.h'))
+
 
 if host_machine.system()=='windows'
     conf_data.set('MAX_PATH', 260)
@@ -783,4 +786,41 @@ custom_target(
     capture: true,
     install_dir: get_option('bindir'),
     install: true
+)
+
+socket_flags = [
+    '-DIPPROTO_ICLFXBM=1',
+    '-DIPPROTO_ST=1',
+    '-DIPPROTO_CBT=1',
+    '-DIPPROTO_IGP=1',
+    '-DIPPROTO_RDP=1',
+    '-DIPPROTO_PGM=1',
+    '-DIPPROTO_L2TP=1',
+    '-DIPPROTO_SCTP=1',
+]
+    
+socketmodule_c_generator = generator(
+    cat,
+    output  : '@BASENAME@.c',
+    arguments : [join_paths('@SOURCE_DIR@', 'Modules', '_socket', 'ip_protocols.c'), '@INPUT@'],
+    capture: true,
+)
+
+socket_module_objs = [
+    socketmodule_c_generator.process(
+        join_paths(python_source, 'Modules', 'socketmodule.c')
+    )
+]
+
+both_libraries(
+    '_socket',
+    socket_module_objs,
+    include_directories : include_directories([
+        join_paths(python_source, 'Modules'),
+        join_paths(python_source, 'Include'),
+    ] + host_includes),
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
 )
