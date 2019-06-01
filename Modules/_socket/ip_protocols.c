@@ -1,3 +1,5 @@
+#include "pyconfig.h"
+
 // WinSock2 only protocols
 
 enum {
@@ -34,3 +36,9 @@ enum {
     IPPROTO_L2TP = 115,
     IPPROTO_SCTP = 132
 };
+
+#include <winsock2.h>
+#include <netioapi.h>
+
+
+

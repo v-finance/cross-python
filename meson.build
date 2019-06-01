@@ -98,6 +98,7 @@ if mingw
         compiler.find_library('version', required : true), 
         compiler.find_library('ws2_32', required : true), 
         compiler.find_library('shlwapi', required : true), 
+        compiler.find_library('iphlpapi', required : true),
     ]
 endif
 
@@ -312,8 +313,25 @@ conf_data.set('HAVE_TZNAME', compiler.check_header('time.h'))
 conf_data.set('HAVE_DYNAMIC_LOADING', 0)
 
 
+#
+# Windows specific configuration from PC/pyconfig.h
+#
 if host_machine.system()=='windows'
     conf_data.set('MAX_PATH', 260)
+    # set the version macros for the windows headers
+    # Python 3.5+ requires Windows Vista or greater
+    conf_data.set('Py_WINVER', 0x0601) # _WIN32_WINNT_VISTA 
+    conf_data.set('Py_NTDDI', 'NTDDI_VISTA')
+    # We only set these values when building Python - we don't want to force
+    # these values on extensions, as that will affect the prototypes and
+    # structures exposed in the Windows headers. Even when building Python, we
+    # allow a single source file to override this - they may need access to
+    # structures etc so it can optionally use new Windows features if it
+    # determines at runtime they are available.
+
+    conf_data.set('NTDDI_VERSION', 'Py_NTDDI')
+    conf_data.set('WINVER', 'Py_WINVER')
+    conf_data.set('_WIN32_WINNT', 'Py_WINVER')
 endif
 
 if mingw
@@ -415,6 +433,7 @@ foreach s : [
     'moduleobject.c',
     'namespaceobject.c',
     'object.c',
+    'picklebufobject.c',
     'obmalloc.c',
     'capsule.c',
     'rangeobject.c',
@@ -452,7 +471,6 @@ foreach s : [
     'ast_opt.c',
     'ast_unparse.c',
     'bltinmodule.c',
-    'coreconfig.c',
     'ceval.c',
     'compile.c',
     'context.c',
@@ -469,6 +487,7 @@ foreach s : [
     'hamt.c',
     'import.c',
     'importdl.c',
+    'initconfig.c',
     'marshal.c',
     'modsupport.c',
     'mystrtoul.c',
@@ -788,17 +807,19 @@ custom_target(
     install: true
 )
 
-socket_flags = [
-    '-DIPPROTO_ICLFXBM=1',
-    '-DIPPROTO_ST=1',
-    '-DIPPROTO_CBT=1',
-    '-DIPPROTO_IGP=1',
-    '-DIPPROTO_RDP=1',
-    '-DIPPROTO_PGM=1',
-    '-DIPPROTO_L2TP=1',
-    '-DIPPROTO_SCTP=1',
-]
+#
+# Now the core python interpreter works.
+# The next step is to build various extension modules, these steps are
+# described in setup.py
+#
     
+extension_includes = include_directories([
+    join_paths(python_source, 'Modules'),
+    join_paths(python_source, 'Include'),
+] + host_includes)
+extension_prefix = ''
+extension_suffix = 'pyd'
+
 socketmodule_c_generator = generator(
     cat,
     output  : '@BASENAME@.c',
@@ -812,15 +833,62 @@ socket_module_objs = [
     )
 ]
 
-both_libraries(
+shared_library(
     '_socket',
     socket_module_objs,
-    include_directories : include_directories([
-        join_paths(python_source, 'Modules'),
-        join_paths(python_source, 'Include'),
-    ] + host_includes),
+    include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     link_with :[libpython.get_shared_lib()],
     dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
 )
+
+# from detect_simple_extensions
+
+#
+# The following modules are all pretty straightforward, and compile
+# on pretty much any POSIXish platform.
+#
+
+# array objects
+shared_library(
+    'array',
+    join_paths(python_source, 'Modules', 'arraymodule.c'),
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+
+# Context Variables
+shared_library(
+    '_contextvars',
+    join_paths(python_source, 'Modules', '_contextvarsmodule.c'),
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+shared_math = join_paths(python_source, 'Modules', '_math.c')
+
+## math library functions, e.g. sin()
+#self.add(Extension('math',  ['mathmodule.c'],
+                   #extra_objects=[shared_math],
+                   #depends=['_math.h', shared_math],
+                   #libraries=['m']))
+
+## complex math library functions
+#self.add(Extension('cmath', ['cmathmodule.c'],
+                   #extra_objects=[shared_math],
+                   #depends=['_math.h', shared_math],
+                   #libraries=['m']))
