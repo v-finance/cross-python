@@ -973,3 +973,17 @@ shared_library(
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
+
+if host_machine.system()=='windows'
+    shared_library(
+        'msvcrt',
+        [join_paths(python_source, 'PC', 'msvcrtmodule.c')],
+        include_directories : extension_includes,
+        c_args: PY_CORE_CFLAGS + ['-D_MSC_VER=1600'],
+        install : true,
+        link_with :[libpython.get_shared_lib()],
+        dependencies : SYSLIBS + LIBS,
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
+endif
