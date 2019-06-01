@@ -1,5 +1,7 @@
 #include "pyconfig.h"
 
+#ifdef MS_WINDOWS
+
 // WinSock2 only protocols
 
 enum {
@@ -40,5 +42,6 @@ enum {
 #include <winsock2.h>
 #include <netioapi.h>
 
+#endif
 
 

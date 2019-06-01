@@ -975,18 +975,6 @@ shared_library(
 )
 
 shared_library(
-    '_overlapped',
-    [join_paths(python_source, 'Modules', 'overlapped.c')],
-    include_directories : extension_includes,
-    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
-    install : true,
-    link_with :[libpython.get_shared_lib()],
-    dependencies : SYSLIBS + LIBS,
-    name_prefix : extension_prefix,
-    name_suffix : extension_suffix,
-)
-
-shared_library(
     '_struct',
     [join_paths(python_source, 'Modules', '_struct.c')],
     include_directories : extension_includes,
@@ -999,6 +987,17 @@ shared_library(
 )
 
 if host_machine.system()=='windows'
+    shared_library(
+        '_overlapped',
+        [join_paths(python_source, 'Modules', 'overlapped.c')],
+        include_directories : extension_includes,
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+        install : true,
+        link_with :[libpython.get_shared_lib()],
+        dependencies : SYSLIBS + LIBS,
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
     shared_library(
         'msvcrt',
         [join_paths(python_source, 'PC', 'msvcrtmodule.c')],
