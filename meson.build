@@ -880,15 +880,32 @@ shared_library(
 )
 
 shared_math = join_paths(python_source, 'Modules', '_math.c')
+m_library = [compiler.find_library('m', required : true)]
 
 ## math library functions, e.g. sin()
-#self.add(Extension('math',  ['mathmodule.c'],
-                   #extra_objects=[shared_math],
-                   #depends=['_math.h', shared_math],
-                   #libraries=['m']))
+
+shared_library(
+    'math',
+    [join_paths(python_source, 'Modules', 'mathmodule.c'), shared_math],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS + m_library,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
 
 ## complex math library functions
-#self.add(Extension('cmath', ['cmathmodule.c'],
-                   #extra_objects=[shared_math],
-                   #depends=['_math.h', shared_math],
-                   #libraries=['m']))
+
+shared_library(
+    'cmath',
+    [join_paths(python_source, 'Modules', 'cmathmodule.c'), shared_math],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS + m_library,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
