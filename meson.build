@@ -883,7 +883,6 @@ shared_math = join_paths(python_source, 'Modules', '_math.c')
 m_library = [compiler.find_library('m', required : true)]
 
 ## math library functions, e.g. sin()
-
 shared_library(
     'math',
     [join_paths(python_source, 'Modules', 'mathmodule.c'), shared_math],
@@ -897,7 +896,6 @@ shared_library(
 )
 
 ## complex math library functions
-
 shared_library(
     'cmath',
     [join_paths(python_source, 'Modules', 'cmathmodule.c'), shared_math],
@@ -906,6 +904,72 @@ shared_library(
     install : true,
     link_with :[libpython.get_shared_lib()],
     dependencies : SYSLIBS + LIBS + m_library,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# select(2); not on ancient System V
+shared_library(
+    'select',
+    [join_paths(python_source, 'Modules', 'selectmodule.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# Fred Drake's interface to the Python parser
+shared_library(
+    'parser',
+    [join_paths(python_source, 'Modules', 'parsermodule.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# Memory-mapped files (also works on Win32).
+#shared_library(
+    #'mmap',
+    #[join_paths(python_source, 'Modules', 'mmapmodule.c')],
+    #include_directories : extension_includes,
+    #c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    #install : true,
+    #link_with :[libpython.get_shared_lib()],
+    #dependencies : SYSLIBS + LIBS,
+    #name_prefix : extension_prefix,
+    #name_suffix : extension_suffix,
+#)
+
+# Lance Ellinghaus's syslog module
+# syslog daemon interface
+#shared_library(
+    #'syslog',
+    #[join_paths(python_source, 'Modules', 'syslogmodule.c')],
+    #include_directories : extension_includes,
+    #c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    #install : true,
+    #link_with :[libpython.get_shared_lib()],
+    #dependencies : SYSLIBS + LIBS,
+    #name_prefix : extension_prefix,
+    #name_suffix : extension_suffix,
+#)
+
+# Python interface to subinterpreter C-API.
+shared_library(
+    '_xxsubinterpreters',
+    [join_paths(python_source, 'Modules', '_xxsubinterpretersmodule.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
