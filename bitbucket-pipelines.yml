@@ -11,7 +11,7 @@ pipelines:
         script:
           # install deps
           - apt-get update 
-          - apt-get install apt-transport-https
+          - apt-get install apt-transport-https wget
           - dpkg --add-architecture i386
           - wget https://dl.winehq.org/wine-builds/Release.key
           - apt-key add Release.key
