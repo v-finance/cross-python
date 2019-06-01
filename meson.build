@@ -1027,3 +1027,89 @@ if host_machine.system()=='windows'
         name_suffix : extension_suffix,
     )
 endif
+
+# random number generator implemented in C
+shared_library(
+    '_random',
+    [join_paths(python_source, 'Modules', '_randommodule.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# random number generator implemented in C
+shared_library(
+    '_bisect',
+    [join_paths(python_source, 'Modules', '_bisectmodule.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+shared_library(
+    '_heapq',
+    [join_paths(python_source, 'Modules', '_heapqmodule.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+#shared_library(
+    #'_pickle',
+    #[join_paths(python_source, 'Modules', '_pickle.c')],
+    #include_directories : extension_includes,
+    #c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
+    #install : true,
+    #link_with :[libpython.get_shared_lib()],
+    #dependencies : SYSLIBS + LIBS,
+    #name_prefix : extension_prefix,
+    #name_suffix : extension_suffix,
+#)
+
+shared_library(
+    'atexit',
+    [join_paths(python_source, 'Modules', 'atexitmodule.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+shared_library(
+    '_json',
+    [join_paths(python_source, 'Modules', '_json.c')],
+    include_directories : python_include,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+shared_library(
+    '_csv',
+    [join_paths(python_source, 'Modules', '_csv.c')],
+    include_directories : python_include,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
