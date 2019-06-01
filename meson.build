@@ -176,6 +176,11 @@ conf_data.set('SIZEOF__BOOL', compiler.sizeof('_Bool'))
 
 # check availability of types
 
+# this should check the struct addrinfo instead of just the header
+conf_data.set('HAVE_ADDRINFO', compiler.check_header('netdb.h'))
+# this should check the struct addrinfo instead of just the header
+conf_data.set('HAVE_SOCKADDR_STORAGE', compiler.check_header('sys/socket.h'))
+
 conf_data.set('HAVE_SSIZE_T', compiler.has_header_symbol('sys/types.h', 'ssize_t'))
 conf_data.set('HAVE_GCC_UINT128_T', compiler.has_type('__uint128_t'))
     
@@ -224,6 +229,7 @@ conf_data.set('HAVE_STDINT_H', compiler.check_header('stdint.h'))
 conf_data.set('HAVE_ERRNO_H', compiler.check_header('errno.h'))
 conf_data.set('HAVE_UNISTD_H', compiler.check_header('unistd.h'))
 conf_data.set('HAVE_STDDEF_H', compiler.check_header('stddef.h'))
+
 conf_data.set('HAVE_ALLOCA_H', compiler.check_header('alloca.h'))
 conf_data.set('HAVE_ASM_TYPES_H', compiler.check_header('asm/types.h'))
 conf_data.set('HAVE_BLUETOOTH_BLUETOOTH_H', compiler.check_header('bluetooth/bluetooth.h'))
