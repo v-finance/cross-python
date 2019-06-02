@@ -794,6 +794,19 @@ python_exe = executable(
     dependencies : SYSLIBS + LIBS,
 )
 
+headers = [
+    'Python.h',
+]
+
+PYTHON_HEADERS = []
+foreach header:headers
+    PYTHON_HEADERS += join_paths(python_source, 'Include', header)
+endforeach
+
+install_headers(
+    PYTHON_HEADERS
+)
+
 #
 # Install the standard library
 #
