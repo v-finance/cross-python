@@ -953,20 +953,6 @@ shared_library(
     #name_suffix : extension_suffix,
 #)
 
-# Lance Ellinghaus's syslog module
-# syslog daemon interface
-#shared_library(
-    #'syslog',
-    #[join_paths(python_source, 'Modules', 'syslogmodule.c')],
-    #include_directories : extension_includes,
-    #c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
-    #install : true,
-    #link_with :[libpython.get_shared_lib()],
-    #dependencies : SYSLIBS + LIBS,
-    #name_prefix : extension_prefix,
-    #name_suffix : extension_suffix,
-#)
-
 # Python interface to subinterpreter C-API.
 shared_library(
     '_xxsubinterpreters',
@@ -1028,6 +1014,20 @@ if host_machine.system()=='windows'
     )
 endif
 
+# libm is needed by delta_new() that uses round() and by accum() that
+# uses modf().
+shared_library(
+    '_datetime',
+    [join_paths(python_source, 'Modules', '_datetimemodule.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS + m_library,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+                           
 # random number generator implemented in C
 shared_library(
     '_random',
@@ -1113,3 +1113,138 @@ shared_library(
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
+
+# profiler (_lsprof is for cProfile.py)
+shared_library(
+    '_lsprof',
+    [join_paths(python_source, 'Modules', '_lsprof.c'),
+     join_paths(python_source, 'Modules', 'rotatingtree.c')],
+    include_directories : python_include,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# static Unicode character database
+shared_library(
+    'unicodedata',
+    [join_paths(python_source, 'Modules', 'unicodedata.c')],
+    include_directories : python_include,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# _opcode module
+shared_library(
+    '_opcode',
+    [join_paths(python_source, 'Modules', '_opcode.c')],
+    include_directories : python_include,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# asyncio speedups
+shared_library(
+    '_asyncio',
+    [join_paths(python_source, 'Modules', '_asynciomodule.c')],
+    include_directories : python_include,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# _abc speedups
+shared_library(
+    '_abc',
+    [join_paths(python_source, 'Modules', '_abc.c')],
+    include_directories : python_include,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# _queue module
+shared_library(
+    '_queue',
+    [join_paths(python_source, 'Modules', '_queuemodule.c')],
+    include_directories : python_include,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+#
+# Here ends the simple stuff.  From here on, modules need certain
+# libraries, are platform-specific, or present other surprises.
+#
+
+# Multimedia modules
+# These don't work for 64-bit platforms!!!
+# These represent audio samples or images as strings:
+#
+# Operations on audio samples
+# According to #993173, this one should actually work fine on
+# 64-bit platforms.
+#
+# audioop needs libm for floor() in multiple functions.
+shared_library(
+    'audioop',
+    [join_paths(python_source, 'Modules', 'audioop.c')],
+    include_directories : python_include,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS + m_library,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# POSIX subprocess module helper.
+if host_machine.system()!='windows'
+    shared_library(
+        '_posixsubprocess',
+        [join_paths(python_source, 'Modules', '_posixsubprocess.c')],
+        include_directories : python_include,
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+        install : true,
+        link_with :[libpython.get_shared_lib()],
+        dependencies : SYSLIBS + LIBS,
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
+
+    # Lance Ellinghaus's syslog module
+    # syslog daemon interface
+    shared_library(
+        'syslog',
+        [join_paths(python_source, 'Modules', 'syslogmodule.c')],
+        include_directories : extension_includes,
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+        install : true,
+        link_with :[libpython.get_shared_lib()],
+        dependencies : SYSLIBS + LIBS,
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
+
+endif
