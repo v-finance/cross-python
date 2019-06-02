@@ -348,7 +348,7 @@ if mingw
     conf_data.set('MEM_RELEASE', '0x8000')
 endif
 
-configure_file(
+pyconfig = configure_file(
     output : 'pyconfig.h',
     configuration : conf_data,
 )
@@ -796,12 +796,100 @@ python_exe = executable(
 
 headers = [
     'Python.h',
+    'abstract.h',
+    'asdl.h',
+    'ast.h',
+    'bltinmodule.h',
+    'bitset.h',
+    'boolobject.h',
+    'bytes_methods.h',
+    'bytearrayobject.h',
+    'bytesobject.h',
+    'cellobject.h',
+    'ceval.h',
+    'classobject.h',
+    'code.h',
+    'codecs.h',
+    'compile.h',
+    'complexobject.h',
+    'descrobject.h',
+    'dictobject.h',
+    'dtoa.h',
+    'dynamic_annotations.h',
+    'enumobject.h',
+    'errcode.h',
+    'eval.h',
+    'fileobject.h',
+    'fileutils.h',
+    'floatobject.h',
+    'frameobject.h',
+    'funcobject.h',
+    'genobject.h',
+    'import.h',
+    'interpreteridobject.h',
+    'intrcheck.h',
+    'iterobject.h',
+    'listobject.h',
+    'longintrepr.h',
+    'longobject.h',
+    'marshal.h',
+    'memoryobject.h',
+    'methodobject.h',
+    'modsupport.h',
+    'moduleobject.h',
+    'namespaceobject.h',
+    'node.h',
+    'object.h',
+    'objimpl.h',
+    'opcode.h',
+    'osdefs.h',
+    'osmodule.h',
+    'patchlevel.h',
+    'picklebufobject.h',
+    'pyarena.h',
+    'pycapsule.h',
+    'pyctype.h',
+    'pydebug.h',
+    'pydtrace.h',
+    'pyerrors.h',
+    'pyfpe.h',
+    'pyhash.h',
+    'pylifecycle.h',
+    'pymath.h',
+    'pymacro.h',
+    'pymem.h',
+    'pyport.h',
+    'pystate.h',
+    'context.h',
+    'pystrcmp.h',
+    'pystrtod.h',
+    'pystrhex.h',
+    'pythonrun.h',
+    'pythread.h',
+    'pytime.h',
+    'rangeobject.h',
+    'setobject.h',
+    'sliceobject.h',
+    'structmember.h',
+    'structseq.h',
+    'symtable.h',
+    'sysmodule.h',
+    'traceback.h',
+    'tracemalloc.h',
+    'tupleobject.h',
+    'ucnhash.h',
+    'unicodeobject.h',
+    'warnings.h',
+    'weakrefobject.h',
 ]
 
 PYTHON_HEADERS = []
 foreach header:headers
     PYTHON_HEADERS += join_paths(python_source, 'Include', header)
 endforeach
+
+PYTHON_HEADERS += pyconfig
+PYTHON_HEADERS += join_paths(python_source, 'Include', 'pymacconfig.h')
 
 install_headers(
     PYTHON_HEADERS
