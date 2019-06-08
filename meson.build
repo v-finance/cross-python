@@ -1351,3 +1351,49 @@ if host_machine.system()!='windows'
     )
 
 endif
+
+# Stefan Krah's _decimal module
+
+libmpdec_includes = include_directories([
+    join_paths(python_source, 'Modules', '_decimal', 'libmpdec'),
+])
+
+libmpdec_sources = [
+  'basearith.c',
+  'constants.c',
+  'context.c',
+  'convolute.c',
+  'crt.c',
+  'difradix2.c',
+  'fnt.c',
+  'fourstep.c',
+  'io.c',
+  'memory.c',
+  'mpdecimal.c',
+  'numbertheory.c',
+  'sixstep.c',
+  'transpose.c',
+  ]
+
+DECIMAL_SOURCES = [join_paths(python_source, 'Modules', '_decimal', '_decimal.c')]
+foreach source:libmpdec_sources
+    DECIMAL_SOURCES += join_paths(python_source, 'Modules', '_decimal', 'libmpdec', source)
+endforeach
+
+if conf_data.get('SIZEOF_SIZE_T') == 8
+    DECIMAL_FLAGS = ['-DCONFIG_64=1', '-DASM=1']
+elif conf_data.get('SIZEOF_SIZE_T') == 4
+    DECIMAL_FLAGS = ['-DCONFIG_32=1', '-DASM=1', '-DPPRO=1']
+endif
+
+shared_library(
+    '_decimal',
+    DECIMAL_SOURCES,
+    include_directories : [extension_includes, libmpdec_includes],
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST + DECIMAL_FLAGS,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS + m_library,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
