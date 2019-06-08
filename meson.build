@@ -91,7 +91,7 @@ OPT = [
 ]
 
 if mingw
-    OPT += ['-mwindows', '-municode']
+    OPT += ['-mwindows',] # '-municode']
     add_project_link_arguments('-municode', '-mwindows', language:'c')
     SYSLIBS += [
         compiler.find_library('mingw32', required : true),
@@ -1169,17 +1169,17 @@ shared_library(
     name_suffix : extension_suffix,
 )
 
-#shared_library(
-    #'_pickle',
-    #[join_paths(python_source, 'Modules', '_pickle.c')],
-    #include_directories : extension_includes,
-    #c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
-    #install : true,
-    #link_with :[libpython.get_shared_lib()],
-    #dependencies : SYSLIBS + LIBS,
-    #name_prefix : extension_prefix,
-    #name_suffix : extension_suffix,
-#)
+shared_library(
+    '_pickle',
+    [join_paths(python_source, 'Modules', '_pickle.c')],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS +['-DPy_BUILD_CORE_MODULE'],
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
 
 shared_library(
     'atexit',
