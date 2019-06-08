@@ -1397,3 +1397,83 @@ shared_library(
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
+
+# hash builtins
+# We always compile these even when OpenSSL is available (issue #14693).
+# It's harmless and the object code is tiny (40-50 KiB per module,
+# only loaded when actually used).
+
+shared_library(
+    '_sha256',
+    [join_paths(python_source, 'Modules', 'sha256module.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+shared_library(
+    '_sha512',
+    [join_paths(python_source, 'Modules', 'sha512module.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+shared_library(
+    '_md5',
+    [join_paths(python_source, 'Modules', 'md5module.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+shared_library(
+    '_sha1',
+    [join_paths(python_source, 'Modules', 'sha1module.c')],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+shared_library(
+    '_blake2', [
+        join_paths(python_source, 'Modules', '_blake2', 'blake2module.c'),
+        join_paths(python_source, 'Modules', '_blake2', 'blake2b_impl.c'),
+        join_paths(python_source, 'Modules', '_blake2', 'blake2s_impl.c'),
+    ],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+shared_library(
+    '_sha3',
+    [join_paths(python_source, 'Modules', '_sha3', 'sha3module.c'),],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
