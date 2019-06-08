@@ -298,6 +298,7 @@ have_dict = {
     "HAVE_CWAIT": conf.CheckFunc('cwait'),
     "HAVE_FSYNC": conf.CheckFunc('fsync') or conf.CheckFunc('_commit'),
     "HAVE_COMMIT": conf.CheckFunc('_commit'),
+    "HAVE_FORK": conf.CheckFunc('fork'),
 
     # @todo : more complex checks in configure.ac
     "HAVE_STD_ATOMIC": conf.CheckHeader('stdatomic.h'), # line 5397
@@ -748,7 +749,7 @@ PYTHON_OBJS = [
     os.path.join('Python', 'codecs.c'),
     os.path.join('Python', 'dynamic_annotations.c'),
     os.path.join('Python', 'errors.c'),
-    os.path.join('Python', 'frozenmain.c'),
+    #os.path.join('Python', 'frozenmain.c'),
     os.path.join('Python', 'future.c'),
     os.path.join('Python', 'getargs.c'),
     os.path.join('Python', 'getcompiler.c'),

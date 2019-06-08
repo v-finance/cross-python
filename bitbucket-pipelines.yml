@@ -3,15 +3,31 @@
 # Only use spaces to indent your .yml configuration.
 # -----
 # You can specify a custom docker image from Docker Hub as your build environment.
-image: python:3.5.1
+image: ubuntu:18.04
 
 pipelines:
   default:
     - step:
         script:
           # install deps
-          - apt-get update && apt-get install -y scons wine mingw-w64 git wine-binfmt
+          - apt-get update 
+          - apt-get --assume-yes install software-properties-common apt-transport-https wget gnupg zip
+          - dpkg --add-architecture i386
+          - wget https://dl.winehq.org/wine-builds/Release.key
+          - apt-key add Release.key
+          # apt-add-repository https://dl.winehq.org/wine-builds/ubuntu/
+          # apt-get update 
+          # apt-get install -y --allow-unauthenticated winehq-stable
+          - apt-get install -y wine-development build-essential ninja-build mingw-w64 git python3-pip
+          - pip3 install meson
           # prepare cpython code
           - git clone https://github.com/python/cpython.git cpython
-          # runs scons
-          - scons --srcdir=cpython
+          # native build
+          - meson -Dsource=cpython builddir
+          - ninja -C builddir
+          # mingw build
+          - meson -Dsource=cpython --cross-file cross-files/i686-w64-mingw32.txt builddir-i686-w64-mingw32 --prefix="${PWD}/i686-w64-mingw32"
+          - ninja -C builddir-i686-w64-mingw32 install
+          - cd i686-w64-mingw32; zip ../python-master-i686-w64-mingw32.zip -r *
+        artifacts:
+          - "*.zip"
