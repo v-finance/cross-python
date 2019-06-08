@@ -767,6 +767,8 @@ foreach mod:MODOBJS
     MODLIBS += mod[0]
 endforeach
 
+install_data([join_paths(python_source, 'LICENSE')], install_dir : get_option('datadir'))
+
 libpython = both_libraries(
     LIBRARY,
     LIBRARY_OBJS ,
