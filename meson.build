@@ -290,7 +290,7 @@ conf_data.set('HAVE_TGAMMA', compiler.has_function('tgamma'))
     
 conf_data.set('HAVE_WMEMCMP', compiler.has_function('wmemcmp'))
 conf_data.set('HAVE_REALPATH', compiler.has_function('realpath'))
-conf_data.set('HAVE_GETPPID', compiler.has_function('getppid') or compiler.has_function('getpid'))
+conf_data.set('HAVE_GETPID', compiler.has_function('getpid'))
 conf_data.set('HAVE_GETLOGIN', compiler.has_function('getlogin'))
 conf_data.set('HAVE_SPAWNV', compiler.has_function('spawnv'))
 conf_data.set('HAVE_EXECV', compiler.has_function('execv'))
