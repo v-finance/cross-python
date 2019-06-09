@@ -1477,3 +1477,22 @@ shared_library(
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
+
+# Helper module for various ascii-encoders.  Uses zlib for an optimized
+# crc32 if we have it.  Otherwise binascii uses its own.
+
+BINASCII_FLAGS = ['-DUSE_ZLIB_CRC32']
+shared_library(
+    'binascii',
+    [join_paths(python_source, 'Modules', 'binascii.c'),],
+    include_directories : [extension_includes, zlib_includes],
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST + BINASCII_FLAGS,
+    install : true,
+    link_with :[
+        libpython.get_shared_lib(),
+        zlib_subproject.get_variable('zlib')
+    ],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
