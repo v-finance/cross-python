@@ -642,6 +642,7 @@ MODSOURCES += [['faulthandler', ['faulthandler.c'],]]
 ## bpo-35053: The module must be builtin since _Py_NewReference()
 ## can call _PyTraceMalloc_NewReference(). hashtable.c
 MODSOURCES += [['_tracemalloc', ['_tracemalloc.c', 'hashtable.c'],]]
+MODSOURCES += [['_symtable', ['symtablemodule.c'],]]
 
 IO_SRC = [
     join_paths('_io', '_iomodule.c'),
