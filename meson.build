@@ -1045,17 +1045,17 @@ shared_library(
 )
 
 # Memory-mapped files (also works on Win32).
-#shared_library(
-    #'mmap',
-    #[join_paths(python_source, 'Modules', 'mmapmodule.c')],
-    #include_directories : extension_includes,
-    #c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
-    #install : true,
-    #link_with :[libpython.get_shared_lib()],
-    #dependencies : SYSLIBS + LIBS,
-    #name_prefix : extension_prefix,
-    #name_suffix : extension_suffix,
-#)
+shared_library(
+    'mmap',
+    [join_paths(python_source, 'Modules', 'mmapmodule.c')],
+    include_directories : python_include,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
 
 # Python interface to subinterpreter C-API.
 shared_library(
