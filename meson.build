@@ -1497,3 +1497,87 @@ shared_library(
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
+
+#
+# detect test extensions
+#
+
+# Python C API test module
+shared_library(
+    '_testcapi',
+    [join_paths(python_source, 'Modules', '_testcapimodule.c'),],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# Python Internal C API test module
+shared_library(
+    '_testinternalcapi',
+    [join_paths(python_source, 'Modules', '_testinternalcapi.c')],
+    include_directories : python_include,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# Python PEP-3118 (buffer protocol) test module
+shared_library(
+    '_testbuffer',
+    [join_paths(python_source, 'Modules', '_testbuffer.c'),],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# Test loading multiple modules from one compiled file (http://bugs.python.org/issue16421)
+shared_library(
+    '_testimportmultiple',
+    [join_paths(python_source, 'Modules', '_testimportmultiple.c'),],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# Test multi-phase extension module init (PEP 489)
+shared_library(
+    '_testmultiphase',
+    [join_paths(python_source, 'Modules', '_testmultiphase.c'),],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# Fuzz tests.
+shared_library(
+    '_xxtestfuzz', [
+        join_paths(python_source, 'Modules', '_xxtestfuzz', '_xxtestfuzz.c'),
+        join_paths(python_source, 'Modules', '_xxtestfuzz', 'fuzzer.c'),
+    ],
+    include_directories : extension_includes,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
