@@ -25,6 +25,7 @@ zip = find_program('zip')
 
 zlib_subproject = subproject('zlib')
 zlib_dep = zlib_subproject.get_variable('zlib_dep')
+sqlite3_subproject = subproject('sqlite3')
 
 #
 # COMPILER OPTIONS
