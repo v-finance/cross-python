@@ -1622,7 +1622,22 @@ shared_library(
     'pyexpat',
     EXPAT_SOURCES,
     include_directories : [extension_includes, expat_includes],
-    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST + EXPAT_ARGS,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# Fredrik Lundh's cElementTree module.  Note that this also
+# uses expat (via the CAPI hook in pyexpat).
+
+shared_library(
+    '_elementtree',
+    [join_paths(python_source, 'Modules', '_elementtree.c',)],
+    include_directories : [extension_includes, expat_includes],
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST + EXPAT_ARGS + ['-DUSE_PYEXPAT_CAPI'],
     install : true,
     link_with :[libpython.get_shared_lib()],
     dependencies : SYSLIBS + LIBS,
