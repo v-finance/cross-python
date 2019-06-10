@@ -26,6 +26,8 @@ zip = find_program('zip')
 zlib_subproject = subproject('zlib')
 zlib_dep = zlib_subproject.get_variable('zlib_dep')
 sqlite3_subproject = subproject('sqlite3')
+sqlite3_lib = sqlite3_subproject.get_variable('sqlib')
+sqlite3_inc = sqlite3_subproject.get_variable('sqinc')
 
 #
 # COMPILER OPTIONS
@@ -1641,6 +1643,45 @@ shared_library(
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + EXPAT_ARGS + ['-DUSE_PYEXPAT_CAPI'],
     install : true,
     link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+#
+# detect sqlite3
+#
+
+sqlite_sources = [
+    'cache.c',
+    'connection.c',
+    'cursor.c',
+    'microprotocols.c',
+    'module.c',
+    'prepare_protocol.c',
+    'row.c',
+    'statement.c',
+    'util.c',
+]
+
+SQLITE_SOURCES = []
+foreach source:sqlite_sources
+    SQLITE_SOURCES += join_paths(python_source, 'Modules', '_sqlite', source)
+endforeach
+
+sqlite_includes = include_directories([
+    join_paths(python_source, 'Modules', '_sqlite',),
+])
+
+SQLITE_ARGS = ['-DMODULE_NAME="sqlite3"']
+
+shared_library(
+    '_sqlite3',
+    SQLITE_SOURCES,
+    include_directories : [extension_includes, sqlite_includes, sqlite3_inc],
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST + SQLITE_ARGS,
+    install : true,
+    link_with :[libpython.get_shared_lib(), sqlite3_lib],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
