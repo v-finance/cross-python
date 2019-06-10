@@ -1581,3 +1581,51 @@ shared_library(
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
+
+# Interface to the Expat XML parser
+#
+# Expat was written by James Clark and is now maintained by a group of
+# developers on SourceForge; see www.libexpat.org for more information.
+# The pyexpat module was written by Paul Prescod after a prototype by
+# Jack Jansen.  The Expat source is included in Modules/expat/.  Usage
+# of a system shared libexpat.so is possible with --with-system-expat
+# configure option.
+#
+# More information on Expat can be found at www.libexpat.org.
+#
+
+expat_includes = include_directories([
+    join_paths(python_source, 'Modules', 'expat',),
+])
+
+expat_sources = [
+    'xmlparse.c',
+    'xmlrole.c',
+    'xmltok.c',
+    'loadlibrary.c',
+]
+
+EXPAT_SOURCES = [join_paths(python_source, 'Modules', 'pyexpat.c',)]
+foreach source:expat_sources
+    EXPAT_SOURCES += join_paths(python_source, 'Modules', 'expat', source)
+endforeach
+
+EXPAT_ARGS = [
+    '-DHAVE_EXPAT_CONFIG_H=1',
+    # bpo-30947: Python uses best available entropy sources to
+    # call XML_SetHashSalt(), expat entropy sources are not needed
+    '-DXML_POOR_ENTROPY=1',
+    '-Wno-implicit-fallthrough',
+]
+
+shared_library(
+    'pyexpat',
+    EXPAT_SOURCES,
+    include_directories : [extension_includes, expat_includes],
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    link_with :[libpython.get_shared_lib()],
+    dependencies : SYSLIBS + LIBS,
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
