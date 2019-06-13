@@ -72,7 +72,8 @@ prefix=		'.'
 # Install prefix for architecture-dependent files
 exec_prefix=	prefix
 
-PYTHONPATH='Lib'
+# Try to use a consistent layout for unix / windows
+PYTHONPATH = join_paths('lib', 'python'+VERSION )
 
 # include paths
 
@@ -303,6 +304,8 @@ conf_data.set('HAVE_WEXECV', compiler.has_function('_wexecv'))
 conf_data.set('HAVE_PIPE', compiler.has_function('CreatePipe'))
 conf_data.set('HAVE_SYSCONF', compiler.has_function('sysconf'))
 conf_data.set('HAVE_SYSTEM', compiler.has_function('system'))
+conf_data.set('HAVE_SYMLINK', compiler.has_function('symlink'))
+#conf_data.set('HAVE_SYMLINKAT', compiler.has_function('symlinkat'))
 conf_data.set('HAVE_CWAIT', compiler.has_function('cwait'))
 conf_data.set('HAVE_FSYNC', compiler.has_function('fsync') or compiler.has_function('_commit'))
 conf_data.set('HAVE_COMMIT', compiler.has_function('_commit'))
@@ -775,7 +778,10 @@ endforeach
 
 install_data([join_paths(python_source, 'LICENSE')], install_dir : get_option('datadir'))
 
-libpython = both_libraries(
+# a static library makes no sense, since it will be unable to load extensions
+# without using export_dynamic
+
+libpython = shared_library(
     LIBRARY,
     LIBRARY_OBJS ,
     include_directories : python_include,
@@ -792,13 +798,18 @@ if host_machine.system()=='windows'
     ]
 endif
 
+# export_dynamic might be used here to be able to build the modules
+# as shared_module instead of shared_library, but that appears to be
+# unsupported on OSX, so lets not do that for now
 python_exe = executable(
     'python',
     PYTHON_SRC,
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     install : true,
-    link_with : [libpython.get_shared_lib()],
+    # link static to avoid being unable to even start the
+    # core interpreter
+    link_with : [libpython],
     dependencies : SYSLIBS + LIBS,
 )
 
@@ -909,13 +920,13 @@ install_headers(
 
 install_subdir(
     join_paths(python_source, 'Lib'),
-    install_dir: join_paths(get_option('bindir'), 'Lib'),
+    install_dir: join_paths(get_option('bindir'), PYTHONPATH),
     strip_directory : true
 )
 
 custom_target(
     'python._pth',
-    command : [echo, '-e', 'Lib\n.'],
+    command : [echo, '-e', PYTHONPATH + '\n.'],
     output  : 'python._pth',
     capture: true,
     install_dir: get_option('bindir'),
@@ -932,8 +943,15 @@ extension_includes = include_directories([
     join_paths(python_source, 'Modules'),
     join_paths(python_source, 'Include'),
 ] + host_includes)
+
+if host_machine.system()=='windows'
+    extension_suffix = 'pyd'
+else
+    extension_suffix = 'so'
+endif
+
 extension_prefix = ''
-extension_suffix = 'pyd'
+
 
 socketmodule_c_generator = generator(
     cat,
@@ -954,7 +972,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -974,7 +992,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -988,7 +1006,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1004,7 +1022,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS + m_library,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1017,7 +1035,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS + m_library,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1030,7 +1048,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1043,7 +1061,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1056,7 +1074,7 @@ shared_library(
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1069,7 +1087,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1081,7 +1099,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1094,7 +1112,7 @@ if host_machine.system()=='windows'
         include_directories : extension_includes,
         c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
         install : true,
-        link_with :[libpython.get_shared_lib()],
+        link_with :[libpython],
         dependencies : SYSLIBS + LIBS,
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
@@ -1105,7 +1123,7 @@ if host_machine.system()=='windows'
         include_directories : extension_includes,
         c_args: PY_CORE_CFLAGS + ['-D_MSC_VER=1600'],
         install : true,
-        link_with :[libpython.get_shared_lib()],
+        link_with :[libpython],
         dependencies : SYSLIBS + LIBS,
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
@@ -1116,7 +1134,7 @@ if host_machine.system()=='windows'
         include_directories : extension_includes,
         c_args: PY_CORE_CFLAGS + ['-D_MSC_VER=1600'],
         install : true,
-        link_with :[libpython.get_shared_lib()],
+        link_with :[libpython],
         dependencies : SYSLIBS + LIBS,
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
@@ -1131,7 +1149,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS + m_library,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1144,7 +1162,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1157,7 +1175,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1169,7 +1187,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1181,7 +1199,7 @@ shared_library(
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS +['-DPy_BUILD_CORE_MODULE'],
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1193,7 +1211,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1205,7 +1223,7 @@ shared_library(
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1217,7 +1235,7 @@ shared_library(
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1231,7 +1249,7 @@ shared_library(
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1244,7 +1262,7 @@ shared_library(
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1257,7 +1275,7 @@ shared_library(
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1270,7 +1288,7 @@ shared_library(
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1283,7 +1301,7 @@ shared_library(
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1296,7 +1314,7 @@ shared_library(
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1322,7 +1340,7 @@ shared_library(
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS + m_library,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1336,7 +1354,7 @@ if host_machine.system()!='windows'
         include_directories : python_include,
         c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
         install : true,
-        link_with :[libpython.get_shared_lib()],
+        link_with :[libpython],
         dependencies : SYSLIBS + LIBS,
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
@@ -1350,7 +1368,7 @@ if host_machine.system()!='windows'
         include_directories : extension_includes,
         c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
         install : true,
-        link_with :[libpython.get_shared_lib()],
+        link_with :[libpython],
         dependencies : SYSLIBS + LIBS,
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
@@ -1398,7 +1416,7 @@ shared_library(
     include_directories : [extension_includes, libmpdec_includes],
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + DECIMAL_FLAGS,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS + m_library,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1415,7 +1433,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1427,7 +1445,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1439,7 +1457,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1451,7 +1469,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1466,7 +1484,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1478,7 +1496,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1495,7 +1513,7 @@ shared_library(
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + BINASCII_FLAGS,
     install : true,
     link_with :[
-        libpython.get_shared_lib(),
+        libpython,
         zlib_subproject.get_variable('zlib')
     ],
     dependencies : SYSLIBS + LIBS,
@@ -1514,7 +1532,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1527,7 +1545,7 @@ shared_library(
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1540,7 +1558,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1553,7 +1571,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1566,7 +1584,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1581,7 +1599,7 @@ shared_library(
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1629,7 +1647,7 @@ shared_library(
     include_directories : [extension_includes, expat_includes],
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + EXPAT_ARGS,
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1644,7 +1662,7 @@ shared_library(
     include_directories : [extension_includes, expat_includes],
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + EXPAT_ARGS + ['-DUSE_PYEXPAT_CAPI'],
     install : true,
-    link_with :[libpython.get_shared_lib()],
+    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
@@ -1683,7 +1701,7 @@ shared_library(
     include_directories : [extension_includes, sqlite_includes, sqlite3_inc],
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + SQLITE_ARGS,
     install : true,
-    link_with :[libpython.get_shared_lib(), sqlite3_lib],
+    link_with :[libpython, sqlite3_lib],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
