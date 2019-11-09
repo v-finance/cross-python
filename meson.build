@@ -354,6 +354,7 @@ if mingw
     conf_data.set('MEM_RESERVE', '0x00002000')
     conf_data.set('PAGE_READWRITE', '0x04')
     conf_data.set('MEM_RELEASE', '0x8000')
+    conf_data.set('IO_REPARSE_TAG_APPEXECLINK', '0x8000001BL')
 endif
 
 pyconfig = configure_file(
@@ -778,10 +779,7 @@ endforeach
 
 install_data([join_paths(python_source, 'LICENSE')], install_dir : get_option('datadir'))
 
-# a static library makes no sense, since it will be unable to load extensions
-# without using export_dynamic
-
-libpython = shared_library(
+python_libraries = both_libraries(
     LIBRARY,
     LIBRARY_OBJS ,
     include_directories : python_include,
@@ -790,6 +788,8 @@ libpython = shared_library(
     link_with : MODLIBS + [dynload, getpath, platform_obj],
     dependencies : SYSLIBS + LIBS,
 )
+
+libpython = python_libraries.get_shared_lib()
 
 PYTHON_SRC = [join_paths(python_source, 'Programs', 'python.c')]
 if host_machine.system()=='windows'
@@ -801,14 +801,19 @@ endif
 # export_dynamic might be used here to be able to build the modules
 # as shared_module instead of shared_library, but that appears to be
 # unsupported on OSX, so lets not do that for now
+
 python_exe = executable(
     'python',
     PYTHON_SRC,
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     install : true,
-    # link static to avoid being unable to even start the
-    # core interpreter
+    # link static would avoid being unable to even start the
+    # core interpreter, however then loading dynamic modules fails due to
+    # a file name check in the windows loader
+    # link_with : [python_libraries.get_static_lib()],
+    # export_dynamic: true,
+    # implib: true,
     link_with : [libpython],
     dependencies : SYSLIBS + LIBS,
 )
@@ -926,7 +931,7 @@ install_subdir(
 
 custom_target(
     'python._pth',
-    command : [echo, '-e', prefix + '\n.'],
+    command : [echo, '-e', prefix + '\n' + exec_prefix + '\n.'],
     output  : 'python._pth',
     capture: true,
     install_dir: get_option('bindir'),
@@ -944,12 +949,13 @@ extension_includes = include_directories([
     join_paths(python_source, 'Include'),
 ] + host_includes)
 
+extension_path = join_paths(get_option('bindir'), exec_prefix)
+
 if host_machine.system()=='windows'
     extension_suffix = 'pyd'
-    extension_path = get_option('libdir')
 else
     extension_suffix = SOABI + '.so'
-    extension_path = join_paths(get_option('bindir'), exec_prefix)
+    
 endif
 
 extension_prefix = ''
@@ -968,15 +974,15 @@ socket_module_objs = [
     )
 ]
 
-shared_library(
+shared_module(
     '_socket',
     socket_module_objs,
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
@@ -989,30 +995,30 @@ shared_library(
 #
 
 # array objects
-shared_library(
+shared_module(
     'array',
     join_paths(python_source, 'Modules', 'arraymodule.c'),
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 
 # Context Variables
-shared_library(
+shared_module(
     '_contextvars',
     join_paths(python_source, 'Modules', '_contextvarsmodule.c'),
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
@@ -1021,136 +1027,136 @@ shared_math = join_paths(python_source, 'Modules', '_math.c')
 m_library = [compiler.find_library('m', required : true)]
 
 ## math library functions, e.g. sin()
-shared_library(
+shared_module(
     'math',
     [join_paths(python_source, 'Modules', 'mathmodule.c'), shared_math],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS + m_library,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 ## complex math library functions
-shared_library(
+shared_module(
     'cmath',
     [join_paths(python_source, 'Modules', 'cmathmodule.c'), shared_math],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS + m_library,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # select(2); not on ancient System V
-shared_library(
+shared_module(
     'select',
     [join_paths(python_source, 'Modules', 'selectmodule.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # Fred Drake's interface to the Python parser
-shared_library(
+shared_module(
     'parser',
     [join_paths(python_source, 'Modules', 'parsermodule.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # Memory-mapped files (also works on Win32).
-shared_library(
+shared_module(
     'mmap',
     [join_paths(python_source, 'Modules', 'mmapmodule.c')],
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # Python interface to subinterpreter C-API.
-shared_library(
+shared_module(
     '_xxsubinterpreters',
     [join_paths(python_source, 'Modules', '_xxsubinterpretersmodule.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
-shared_library(
+shared_module(
     '_struct',
     [join_paths(python_source, 'Modules', '_struct.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 if host_machine.system()=='windows'
-    shared_library(
+    shared_module(
         '_overlapped',
         [join_paths(python_source, 'Modules', 'overlapped.c')],
         include_directories : extension_includes,
         c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
         install : true,
         install_dir: extension_path,
-        link_with :[libpython],
         dependencies : SYSLIBS + LIBS,
+        link_with: [libpython],
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
     )
-    shared_library(
+    shared_module(
         'msvcrt',
         [join_paths(python_source, 'PC', 'msvcrtmodule.c')],
         include_directories : extension_includes,
         c_args: PY_CORE_CFLAGS + ['-D_MSC_VER=1600'],
         install : true,
         install_dir: extension_path,
-        link_with :[libpython],
         dependencies : SYSLIBS + LIBS,
+        link_with: [libpython],
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
     )
-    shared_library(
+    shared_module(
         '_winapi',
         [join_paths(python_source, 'Modules', '_winapi.c')],
         include_directories : extension_includes,
         c_args: PY_CORE_CFLAGS + ['-D_MSC_VER=1600'],
         install : true,
         install_dir: extension_path,
-        link_with :[libpython],
         dependencies : SYSLIBS + LIBS,
+        link_with: [libpython],
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
     )
@@ -1158,114 +1164,114 @@ endif
 
 # libm is needed by delta_new() that uses round() and by accum() that
 # uses modf().
-shared_library(
+shared_module(
     '_datetime',
     [join_paths(python_source, 'Modules', '_datetimemodule.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS + m_library,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
                            
 # random number generator implemented in C
-shared_library(
+shared_module(
     '_random',
     [join_paths(python_source, 'Modules', '_randommodule.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # random number generator implemented in C
-shared_library(
+shared_module(
     '_bisect',
     [join_paths(python_source, 'Modules', '_bisectmodule.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
-shared_library(
+shared_module(
     '_heapq',
     [join_paths(python_source, 'Modules', '_heapqmodule.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
-shared_library(
+shared_module(
     '_pickle',
     [join_paths(python_source, 'Modules', '_pickle.c')],
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS +['-DPy_BUILD_CORE_MODULE'],
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
-shared_library(
+shared_module(
     'atexit',
     [join_paths(python_source, 'Modules', 'atexitmodule.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
-shared_library(
+shared_module(
     '_json',
     [join_paths(python_source, 'Modules', '_json.c')],
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
-shared_library(
+shared_module(
     '_csv',
     [join_paths(python_source, 'Modules', '_csv.c')],
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # profiler (_lsprof is for cProfile.py)
-shared_library(
+shared_module(
     '_lsprof',
     [join_paths(python_source, 'Modules', '_lsprof.c'),
      join_paths(python_source, 'Modules', 'rotatingtree.c')],
@@ -1273,78 +1279,78 @@ shared_library(
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # static Unicode character database
-shared_library(
+shared_module(
     'unicodedata',
     [join_paths(python_source, 'Modules', 'unicodedata.c')],
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # _opcode module
-shared_library(
+shared_module(
     '_opcode',
     [join_paths(python_source, 'Modules', '_opcode.c')],
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # asyncio speedups
-shared_library(
+shared_module(
     '_asyncio',
     [join_paths(python_source, 'Modules', '_asynciomodule.c')],
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # _abc speedups
-shared_library(
+shared_module(
     '_abc',
     [join_paths(python_source, 'Modules', '_abc.c')],
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # _queue module
-shared_library(
+shared_module(
     '_queue',
     [join_paths(python_source, 'Modules', '_queuemodule.c')],
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
@@ -1363,45 +1369,45 @@ shared_library(
 # 64-bit platforms.
 #
 # audioop needs libm for floor() in multiple functions.
-shared_library(
+shared_module(
     'audioop',
     [join_paths(python_source, 'Modules', 'audioop.c')],
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS + m_library,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # POSIX subprocess module helper.
 if host_machine.system()!='windows'
-    shared_library(
+    shared_module(
         '_posixsubprocess',
         [join_paths(python_source, 'Modules', '_posixsubprocess.c')],
         include_directories : python_include,
         c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
         install : true,
         install_dir: extension_path,
-        link_with :[libpython],
         dependencies : SYSLIBS + LIBS,
+        link_with: [libpython],
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
     )
 
     # Lance Ellinghaus's syslog module
     # syslog daemon interface
-    shared_library(
+    shared_module(
         'syslog',
         [join_paths(python_source, 'Modules', 'syslogmodule.c')],
         include_directories : extension_includes,
         c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
         install : true,
         install_dir: extension_path,
-        link_with :[libpython],
         dependencies : SYSLIBS + LIBS,
+        link_with: [libpython],
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
     )
@@ -1442,15 +1448,15 @@ elif conf_data.get('SIZEOF_SIZE_T') == 4
     DECIMAL_FLAGS = ['-DCONFIG_32=1', '-DASM=1', '-DPPRO=1']
 endif
 
-shared_library(
+shared_module(
     '_decimal',
     DECIMAL_SOURCES,
     include_directories : [extension_includes, libmpdec_includes],
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + DECIMAL_FLAGS,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS + m_library,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
@@ -1460,59 +1466,59 @@ shared_library(
 # It's harmless and the object code is tiny (40-50 KiB per module,
 # only loaded when actually used).
 
-shared_library(
+shared_module(
     '_sha256',
     [join_paths(python_source, 'Modules', 'sha256module.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
-shared_library(
+shared_module(
     '_sha512',
     [join_paths(python_source, 'Modules', 'sha512module.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
-shared_library(
+shared_module(
     '_md5',
     [join_paths(python_source, 'Modules', 'md5module.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
-shared_library(
+shared_module(
     '_sha1',
     [join_paths(python_source, 'Modules', 'sha1module.c')],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
-shared_library(
+shared_module(
     '_blake2', [
         join_paths(python_source, 'Modules', '_blake2', 'blake2module.c'),
         join_paths(python_source, 'Modules', '_blake2', 'blake2b_impl.c'),
@@ -1522,21 +1528,21 @@ shared_library(
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
-shared_library(
+shared_module(
     '_sha3',
     [join_paths(python_source, 'Modules', '_sha3', 'sha3module.c'),],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
@@ -1545,7 +1551,7 @@ shared_library(
 # crc32 if we have it.  Otherwise binascii uses its own.
 
 BINASCII_FLAGS = ['-DUSE_ZLIB_CRC32']
-shared_library(
+shared_module(
     'binascii',
     [join_paths(python_source, 'Modules', 'binascii.c'),],
     include_directories : [extension_includes, zlib_includes],
@@ -1553,8 +1559,8 @@ shared_library(
     install : true,
     install_dir: extension_path,
     link_with :[
+        zlib_subproject.get_variable('zlib'),
         libpython,
-        zlib_subproject.get_variable('zlib')
     ],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
@@ -1566,77 +1572,77 @@ shared_library(
 #
 
 # Python C API test module
-shared_library(
+shared_module(
     '_testcapi',
     [join_paths(python_source, 'Modules', '_testcapimodule.c'),],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # Python Internal C API test module
-shared_library(
+shared_module(
     '_testinternalcapi',
     [join_paths(python_source, 'Modules', '_testinternalcapi.c')],
     include_directories : python_include,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # Python PEP-3118 (buffer protocol) test module
-shared_library(
+shared_module(
     '_testbuffer',
     [join_paths(python_source, 'Modules', '_testbuffer.c'),],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # Test loading multiple modules from one compiled file (http://bugs.python.org/issue16421)
-shared_library(
+shared_module(
     '_testimportmultiple',
     [join_paths(python_source, 'Modules', '_testimportmultiple.c'),],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # Test multi-phase extension module init (PEP 489)
-shared_library(
+shared_module(
     '_testmultiphase',
     [join_paths(python_source, 'Modules', '_testmultiphase.c'),],
     include_directories : extension_includes,
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
 
 # Fuzz tests.
-shared_library(
+shared_module(
     '_xxtestfuzz', [
         join_paths(python_source, 'Modules', '_xxtestfuzz', '_xxtestfuzz.c'),
         join_paths(python_source, 'Modules', '_xxtestfuzz', 'fuzzer.c'),
@@ -1645,8 +1651,8 @@ shared_library(
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
@@ -1671,7 +1677,8 @@ expat_sources = [
     'xmlparse.c',
     'xmlrole.c',
     'xmltok.c',
-    'loadlibrary.c',
+    'xmltok_impl.c',
+    'xmltok_ns.c',
 ]
 
 EXPAT_SOURCES = [join_paths(python_source, 'Modules', 'pyexpat.c',)]
@@ -1687,15 +1694,15 @@ EXPAT_ARGS = [
     '-Wno-implicit-fallthrough',
 ]
 
-shared_library(
+shared_module(
     'pyexpat',
     EXPAT_SOURCES,
     include_directories : [extension_includes, expat_includes],
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + EXPAT_ARGS,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
@@ -1703,15 +1710,15 @@ shared_library(
 # Fredrik Lundh's cElementTree module.  Note that this also
 # uses expat (via the CAPI hook in pyexpat).
 
-shared_library(
+shared_module(
     '_elementtree',
     [join_paths(python_source, 'Modules', '_elementtree.c',)],
     include_directories : [extension_includes, expat_includes],
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + EXPAT_ARGS + ['-DUSE_PYEXPAT_CAPI'],
     install : true,
     install_dir: extension_path,
-    link_with :[libpython],
     dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
@@ -1743,14 +1750,14 @@ sqlite_includes = include_directories([
 
 SQLITE_ARGS = ['-DMODULE_NAME="sqlite3"']
 
-shared_library(
+shared_module(
     '_sqlite3',
     SQLITE_SOURCES,
     include_directories : [extension_includes, sqlite_includes, sqlite3_inc],
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST + SQLITE_ARGS,
     install : true,
     install_dir: extension_path,
-    link_with :[libpython, sqlite3_lib],
+    link_with :[sqlite3_lib, libpython],
     dependencies : SYSLIBS + LIBS,
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
