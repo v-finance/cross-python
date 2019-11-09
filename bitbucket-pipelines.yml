@@ -21,7 +21,7 @@ pipelines:
           - apt-get install -y wine-development build-essential ninja-build mingw-w64 git python3-pip
           - pip3 install meson
           # prepare cpython code
-          - git clone https://github.com/python/cpython.git cpython
+          - git clone -b 3.8 --single-branch https://github.com/python/cpython.git cpython
           # native build
           - meson -Dsource=cpython builddir
           - ninja -C builddir
