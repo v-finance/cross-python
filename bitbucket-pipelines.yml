@@ -14,9 +14,8 @@ pipelines:
           - apt-get update 
           - apt-get --assume-yes install software-properties-common apt-transport-https wget gnupg zip git python3-pip build-essential ninja-build 
           - pip3 install meson
-          # install libffi
+          # get libffi
           - wget https://github.com/libffi/libffi/releases/download/v3.3-rc2/libffi-3.3-rc2.tar.gz
-          - tar xzvf libffi-3.3-rc2.tar.gz
           # prepare cpython code
           - git clone -b 3.8 --single-branch https://github.com/python/cpython.git cpython
           # native build
@@ -35,10 +34,11 @@ pipelines:
           # mingw build 32 bit
           - apt-cache search wine
           - apt-get install -y wine32:i386
-          - cd libffi-3.3-rc2; ./configure --host=i686-w64-mingw32
-          - cd libffi-3.3-rc2; make
+          - tar xzvf libffi-3.3-rc2.tar.gz
+          #- cd libffi-3.3-rc2; ./configure --host=i686-w64-mingw32
+          #- cd libffi-3.3-rc2; make
           - meson -Dsource=cpython --cross-file cross-files/i686-w64-mingw32.txt builddir-i686-w64-mingw32 --prefix="${PWD}/i686-w64-mingw32"
           - ninja -C builddir-i686-w64-mingw32 install
           - cd i686-w64-mingw32; zip ../python-3.8-i686-w64-mingw32.zip -r *
         artifacts:
-          - "python-3.8-x86_64-w64-mingw32.zip"
+          - "*.zip"
