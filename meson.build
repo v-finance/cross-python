@@ -29,6 +29,8 @@ sqlite3_subproject = subproject('sqlite3')
 sqlite3_lib = sqlite3_subproject.get_variable('sqlib')
 sqlite3_inc = sqlite3_subproject.get_variable('sqinc')
 
+ffi_lib = compiler.find_library('ffi', required : false)
+
 #
 # COMPILER OPTIONS
 #
@@ -96,9 +98,12 @@ OPT = [
 
 if mingw
     OPT += ['-mwindows',] # '-municode']
-    add_project_link_arguments('-municode', '-mwindows', language:'c')
+    # static-libgcc is required to get 32bit running
+    add_project_link_arguments('-municode', '-mwindows', '-static-libgcc', language:'c')
     SYSLIBS += [
         compiler.find_library('mingw32', required : true),
+        # msvcr is needed to get 32bit linked
+        compiler.find_library('msvcr120', required : true),
         compiler.find_library('version', required : true), 
         compiler.find_library('ws2_32', required : true), 
         compiler.find_library('shlwapi', required : true), 
@@ -325,16 +330,22 @@ conf_data.set('TIME_WITH_SYS_TIME', compiler.check_header('time.h') and compiler
 conf_data.set('HAVE_DECL_TZNAME', compiler.check_header('time.h'))
 conf_data.set('HAVE_TZNAME', compiler.check_header('time.h'))
 conf_data.set('HAVE_DYNAMIC_LOADING', 0)
+conf_data.set('Py_ENABLE_SHARED', 1)
 
 
 #
 # Windows specific configuration from PC/pyconfig.h
 #
 if host_machine.system()=='windows'
+
+    # Vista : (0x0600) Vista
+    # Windows 7 (0x0601)
+    # Windows 8 (0x0602)
+
     conf_data.set('MAX_PATH', 260)
     # set the version macros for the windows headers
     # Python 3.5+ requires Windows Vista or greater
-    conf_data.set('Py_WINVER', 0x0601) # _WIN32_WINNT_VISTA 
+    conf_data.set('Py_WINVER', 0x0601) #  
     conf_data.set('Py_NTDDI', 'NTDDI_VISTA')
     # We only set these values when building Python - we don't want to force
     # these values on extensions, as that will affect the prototypes and
@@ -346,12 +357,23 @@ if host_machine.system()=='windows'
     conf_data.set('NTDDI_VERSION', 'Py_NTDDI')
     conf_data.set('WINVER', 'Py_WINVER')
     conf_data.set('_WIN32_WINNT', 'Py_WINVER')
+
+    # MS_WIN32 - Code specific to the MS Win32 (and Win64) API (obsolete, this covers all supported APIs)
+    conf_data.set('MS_WIN32', 1) 
+    conf_data.set('MS_COREDLL', 1)
 endif
 
 if mingw
+    compiler.has_function('VirtualAlloc', prefix: '#include <memoryapi.h>')
     # these appear to be missing from mingw
-    conf_data.set('MEM_COMMIT', '0x00001000')
-    conf_data.set('MEM_RESERVE', '0x00002000')
+    
+    conf_data.set('NDIS_IF_MAX_STRING_SIZE', 256)
+    #conf_data.set('MEM_COMMIT', '0x00001000')
+    #conf_data.set('MEM_RESERVE', '0x00002000')
+    #conf_data.set('PAGE_READWRITE', '0x04')
+    #conf_data.set('MEM_RELEASE', '0x8000')
+    conf_data.set('MEM_COMMIT', '0x1000')
+    conf_data.set('MEM_RESERVE', '0x2000')
     conf_data.set('PAGE_READWRITE', '0x04')
     conf_data.set('MEM_RELEASE', '0x8000')
     conf_data.set('IO_REPARSE_TAG_APPEXECLINK', '0x8000001BL')
@@ -1762,3 +1784,36 @@ shared_module(
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
+
+#
+# detect libffi and build ctypes
+#
+
+ctypes_sources = [
+    '_ctypes.c',
+    'callbacks.c',
+    'callproc.c',
+    'cfield.c',
+    'malloc_closure.c',
+    'stgdict.c',
+]
+
+CTYPES_SOURCES = []
+foreach source:ctypes_sources
+    CTYPES_SOURCES += join_paths(python_source, 'Modules', '_ctypes', source)
+endforeach
+
+if ffi_lib.found()
+    shared_module(
+        '_ctypes',
+        CTYPES_SOURCES,
+        include_directories : extension_includes,
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+        install : true,
+        install_dir: extension_path,
+        dependencies : SYSLIBS + LIBS + [ffi_lib],
+        link_with: [libpython],
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
+endif
