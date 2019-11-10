@@ -11,14 +11,8 @@ pipelines:
         script:
           # install deps
           - apt-get update 
-          - apt-get --assume-yes install software-properties-common apt-transport-https wget gnupg zip
           - dpkg --add-architecture i386
-          - wget https://dl.winehq.org/wine-builds/Release.key
-          - apt-key add Release.key
-          # apt-add-repository https://dl.winehq.org/wine-builds/ubuntu/
-          # apt-get update 
-          # apt-get install -y --allow-unauthenticated winehq-stable
-          - apt-get install -y wine-development wine-development:i386 build-essential ninja-build mingw-w64 git python3-pip
+          - apt-get --assume-yes install software-properties-common apt-transport-https wget gnupg zip git python3-pip build-essential ninja-build 
           - pip3 install meson
           # prepare cpython code
           - git clone -b 3.8 --single-branch https://github.com/python/cpython.git cpython
@@ -26,10 +20,17 @@ pipelines:
           - meson -Dsource=cpython builddir
           - ninja -C builddir
           # mingw build 64 bit
+          - wget https://dl.winehq.org/wine-builds/Release.key
+          - apt-key add Release.key
+          # apt-add-repository https://dl.winehq.org/wine-builds/ubuntu/
+          # apt-get update 
+          # apt-get install -y --allow-unauthenticated winehq-stable
+          - apt-get install -y wine-development mingw-w64
           - meson -Dsource=cpython --cross-file cross-files/x86_64-w64-mingw32.txt builddir-x86_64-w64-mingw32 --prefix="${PWD}/x86_64-w64-mingw32"
           - ninja -C builddir-x86_64-w64-mingw32 install
           - cd x86_64-w64-mingw32; zip ../python-3.8-x86_64-w64-mingw32.zip -r *
           # mingw build 32 bit
+          - apt-get install -y wine-development wine-development:i386 mingw-w64
           - meson -Dsource=cpython --cross-file cross-files/i686-w64-mingw32.txt builddir-i686-w64-mingw32 --prefix="${PWD}/i686-w64-mingw32"
           - ninja -C builddir-i686-w64-mingw32 install
           - cd i686-w64-mingw32; zip ../python-3.8-i686-w64-mingw32.zip -r *
