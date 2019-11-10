@@ -30,16 +30,14 @@ pipelines:
           - apt-get install -y wine-development mingw-w64
           - meson -Dsource=cpython --cross-file cross-files/x86_64-w64-mingw32.txt builddir-x86_64-w64-mingw32 --prefix="${PWD}/x86_64-w64-mingw32"
           - ninja -C builddir-x86_64-w64-mingw32 install
+          - cd x86_64-w64-mingw32; zip ../python-3.8-x86_64-w64-mingw32.zip -r *; cd ..
           # mingw build 32 bit
-          - apt-cache search wine
-          - apt-get install -y wine32:i386
           - tar xzvf libffi-3.3-rc2.tar.gz
           - cd libffi-3.3-rc2; ./configure --host=i686-w64-mingw32; cd ..
           - cd libffi-3.3-rc2; make install; cd ..
           - meson -Dsource=cpython --cross-file cross-files/i686-w64-mingw32.txt builddir-i686-w64-mingw32 --prefix="${PWD}/i686-w64-mingw32"
           - ninja -C builddir-i686-w64-mingw32 install
           # create a package
-          - cd x86_64-w64-mingw32; zip ../python-3.8-x86_64-w64-mingw32.zip -r *; cd ..
           - cd i686-w64-mingw32; zip ../python-3.8-i686-w64-mingw32.zip -r *; cd ..
         artifacts:
           - "*.zip"
