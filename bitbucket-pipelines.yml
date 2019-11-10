@@ -30,7 +30,7 @@ pipelines:
           - ninja -C builddir-x86_64-w64-mingw32 install
           - cd x86_64-w64-mingw32; zip ../python-3.8-x86_64-w64-mingw32.zip -r *
           # mingw build 32 bit
-          - apt-get install -y wine-development wine-development:i386 mingw-w64
+          - apt-get install -y wine32:i386
           - meson -Dsource=cpython --cross-file cross-files/i686-w64-mingw32.txt builddir-i686-w64-mingw32 --prefix="${PWD}/i686-w64-mingw32"
           - ninja -C builddir-i686-w64-mingw32 install
           - cd i686-w64-mingw32; zip ../python-3.8-i686-w64-mingw32.zip -r *
