@@ -331,6 +331,7 @@ conf_data.set('HAVE_DECL_TZNAME', compiler.check_header('time.h'))
 conf_data.set('HAVE_TZNAME', compiler.check_header('time.h'))
 conf_data.set('HAVE_DYNAMIC_LOADING', 0)
 conf_data.set('Py_ENABLE_SHARED', 1)
+conf_data.set('WITH_PYMALLOC', 1)
 
 
 #
@@ -364,7 +365,6 @@ if host_machine.system()=='windows'
 endif
 
 if mingw
-    compiler.has_function('VirtualAlloc', prefix: '#include <memoryapi.h>')
     # these appear to be missing from mingw
     
     conf_data.set('NDIS_IF_MAX_STRING_SIZE', 256)
