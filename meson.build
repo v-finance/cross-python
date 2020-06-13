@@ -1804,12 +1804,19 @@ foreach source:ctypes_sources
     CTYPES_SOURCES += join_paths(python_source, 'Modules', '_ctypes', source)
 endforeach
 
+FFI_ARGS = []
+if host_machine.system()=='windows'
+    if host_machine.cpu_family()=='x86_64'
+        FFI_ARGS += ['-DMS_WIN64']
+    endif
+endif
+
 if ffi_lib.found()
     shared_module(
         '_ctypes',
         CTYPES_SOURCES,
         include_directories : extension_includes,
-        c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST + FFI_ARGS,
         install : true,
         install_dir: extension_path,
         dependencies : SYSLIBS + LIBS + [ffi_lib],
