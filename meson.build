@@ -108,6 +108,7 @@ if mingw
         compiler.find_library('ws2_32', required : true), 
         compiler.find_library('shlwapi', required : true), 
         compiler.find_library('iphlpapi', required : true),
+        compiler.find_library('intl', required : true),
     ]
 endif
 

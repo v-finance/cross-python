@@ -9,7 +9,7 @@ Basic use
 
 Make sure meson is installed ::
 
-    sudo apt-get install meson ninja-build
+    sudo dnf install meson ninja-build
 
 Download and unzip the Python source code.
 
