@@ -6,7 +6,7 @@ build script that facilitates cross compilation of the CPython interpreter.
 
 # Basic use
 
-Make sure meson is installed ::
+Make sure meson is installed :
 
 ```
     sudo dnf install meson ninja-build
@@ -14,12 +14,14 @@ Make sure meson is installed ::
 
 Download and unzip the Python source code.
 
-Start the build script by pointing it to the Python source code ::
+Start the build script by pointing it to the Python source code :
 
 ```
     meson -Dsource=../cpython builddir
     ninja -C builddir
 ```
+
+In the example above it is assumed the CPython source code is checked out in `../cpython`.
 
 # Terminology
 
@@ -41,7 +43,7 @@ Different configuration files for cross compiling are in the *cross-files* direc
    it creates /proc/sys/fs/binfmt_misc/wine which allows the configure tests
    work.
 
- - the default configuration of wine should be changed to allow the CPython
+ - the default configuration of wine might need to be changed to allow the CPython
    interpreter to start :
 
     - start `winecfg`
@@ -51,10 +53,18 @@ Different configuration files for cross compiling are in the *cross-files* direc
     - Select the library in `Existing overrides`, press `Edit`
     - Set the library to `disabled`
 
-Start the build script by using a cross-file ::
+Start the build script by using a cross-file :
 
 ```
-    meson -Dsource=../cpython --cross-file cross-files/i686-w64-mingw32.txt --prefix="${PWD}/i686-w64-mingw32" builddir-i686-w64-mingw32
-    ninja -C builddir-i686-w64-mingw32
-    ninja -C builddir-i686-w64-mingw32 install
+    meson -Dsource=../cpython --cross-file cross-files/x86_64-w64-mingw32.txt --prefix="${PWD}/x86_64-w64-mingw32" builddir-x86_64-w64-mingw32
+    ninja -C builddir-x86_64-w64-mingw32
+    ninja -C builddir-x86_64-w64-mingw32 install
+```
+
+To run the python for windows build, the mingw runtime library and dependencies need to be avialable in the path :
+
+```
+    cd x86_64-w64-mingw32/bin
+    export WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin/
+    ./python.exe
 ```
