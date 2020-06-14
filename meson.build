@@ -320,6 +320,7 @@ conf_data.set('HAVE_DLOPEN', compiler.has_function('dlopen', prefix: '#include <
 
 conf_data.set('MS_WINDOWS', compiler.check_header('windows.h'))
 conf_data.set('NT_THREADS', compiler.check_header('windows.h'))
+conf_data.set('HAVE_WCSFTIME', compiler.has_function('wcsftime', prefix: '#include <wchar.h>\n#include <time.h>'))
     
 # @todo : more complex checks in configure.ac
 conf_data.set('HAVE_STD_ATOMIC', compiler.check_header('stdatomic.h')) # line 5397
