@@ -1811,11 +1811,15 @@ if host_machine.system()=='windows'
     endif
 endif
 
+ffi_includes = include_directories([
+    '/usr/i686-w64-mingw32/sys-root/mingw/lib/libffi-3.1/include/'
+])
+
 if ffi_lib.found()
     shared_module(
         '_ctypes',
         CTYPES_SOURCES,
-        include_directories : extension_includes,
+        include_directories : [extension_includes, ffi_includes],
         c_args: PY_CFLAGS + PY_CFLAGS_NODIST + FFI_ARGS,
         install : true,
         install_dir: extension_path,

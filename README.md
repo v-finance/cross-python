@@ -43,6 +43,8 @@ Different configuration files for cross compiling are in the *cross-files* direc
    it creates /proc/sys/fs/binfmt_misc/wine which allows the configure tests
    work.
 
+ - https://tecadmin.net/steps-install-wine-centos-rhel-fedora-systems/
+
  - the default configuration of wine might need to be changed to allow the CPython
    interpreter to start :
 
