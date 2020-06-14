@@ -46,10 +46,12 @@ ffi_lib = compiler.find_library('ffi', required : false)
 VERSION = run_command(
     version, [join_paths(python_source, 'configure.ac')],
   ).stdout()
+VERSION_ARRAY = VERSION.split('.')
+API_VERSION = ''.join([VERSION_ARRAY[0], VERSION_ARRAY[1]])
 
-warning(VERSION)
+warning('Building CPython version : ' + VERSION)
 
-SOABI=		'cpython-36m-x86_64-linux-gnu'
+SOABI = 'cpython-' + API_VERSION + 'm-x86_64-linux-gnu'
 VPATH=          'sourcedir'
 
 LIBS=		[]
@@ -321,6 +323,7 @@ conf_data.set('HAVE_DLOPEN', compiler.has_function('dlopen', prefix: '#include <
 conf_data.set('MS_WINDOWS', compiler.check_header('windows.h'))
 conf_data.set('NT_THREADS', compiler.check_header('windows.h'))
 conf_data.set('HAVE_WCSFTIME', compiler.has_function('wcsftime', prefix: '#include <wchar.h>\n#include <time.h>'))
+conf_data.set('HAVE_STRFTIME', compiler.has_function('strftime', prefix: '#include <time.h>'))
     
 # @todo : more complex checks in configure.ac
 conf_data.set('HAVE_STD_ATOMIC', compiler.check_header('stdatomic.h')) # line 5397
@@ -804,8 +807,9 @@ endforeach
 install_data([join_paths(python_source, 'LICENSE')], install_dir : get_option('datadir'))
 
 python_libraries = both_libraries(
-    LIBRARY,
+    LIBRARY + API_VERSION,
     LIBRARY_OBJS ,
+    name_prefix: '',
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     install : true,
@@ -814,6 +818,18 @@ python_libraries = both_libraries(
 )
 
 libpython = python_libraries.get_shared_lib()
+
+# PEP 384 define ABI compatibility libraries
+
+shared_library(
+    LIBRARY + '3',
+    [],
+    name_prefix: '',
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS,
+    install: true,
+    link_with: libpython,
+)
 
 PYTHON_SRC = [join_paths(python_source, 'Programs', 'python.c')]
 if host_machine.system()=='windows'
@@ -955,7 +971,7 @@ install_subdir(
 
 custom_target(
     'python._pth',
-    command : [echo, '-e', prefix + '\n' + exec_prefix + '\n.'],
+    command : [echo, '-e', prefix + '\n' + exec_prefix + '\n.\n' + join_paths('lib', 'site-packages')],
     output  : 'python._pth',
     capture: true,
     install_dir: get_option('bindir'),
