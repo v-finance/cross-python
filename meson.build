@@ -99,13 +99,15 @@ OPT = [
 ]
 
 if mingw
-    OPT += ['-mwindows',] # '-municode']
+    # https://renenyffenegger.ch/notes/Windows/development/Portable-Executable/subsystem/index
+    OPT += ['-mconsole',] # '-municode']
     # static-libgcc is required to get 32bit running
-    add_project_link_arguments('-municode', '-mwindows', '-static-libgcc', language:'c')
+    add_project_link_arguments('-municode', '-mconsole', '-static-libgcc', language:'c')
     SYSLIBS += [
         compiler.find_library('mingw32', required : true),
-        # msvcr is needed to get 32bit linked
-        compiler.find_library('msvcr120', required : true),
+        # msvcr was needed to get 32bit linked, this appears no longer
+        # the case.
+        # compiler.find_library('msvcr120', required : true),
         compiler.find_library('version', required : true), 
         compiler.find_library('ws2_32', required : true), 
         compiler.find_library('shlwapi', required : true), 
@@ -831,12 +833,6 @@ shared_library(
     link_with: libpython,
 )
 
-PYTHON_SRC = [join_paths(python_source, 'Programs', 'python.c')]
-if host_machine.system()=='windows'
-    PYTHON_SRC += [
-        join_paths(python_source, 'PC', 'WinMain.c'),
-    ]
-endif
 
 # export_dynamic might be used here to be able to build the modules
 # as shared_module instead of shared_library, but that appears to be
@@ -844,7 +840,7 @@ endif
 
 python_exe = executable(
     'python',
-    PYTHON_SRC,
+    [join_paths(python_source, 'Programs', 'python.c')],
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     install : true,
@@ -857,6 +853,18 @@ python_exe = executable(
     link_with : [libpython],
     dependencies : SYSLIBS + LIBS,
 )
+
+if host_machine.system()=='windows'
+    executable(
+        'pythonw',
+        [join_paths(python_source, 'PC', 'WinMain.c')],
+        include_directories : python_include,
+        c_args : PY_CORE_CFLAGS,
+        install : true,
+        link_with : [libpython],
+        dependencies : SYSLIBS + LIBS,
+    )
+endif
 
 headers = [
     'Python.h',
