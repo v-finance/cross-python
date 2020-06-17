@@ -70,3 +70,9 @@ To run the python for windows build, the mingw runtime library and dependencies 
     export WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin/
     ./python.exe
 ```
+
+### Related
+
+https://mingwpy.github.io/motivation.html
+
+https://github.com/numpy/numpy/wiki/Numerical-software-on-Windows

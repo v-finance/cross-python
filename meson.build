@@ -825,7 +825,7 @@ libpython = python_libraries.get_shared_lib()
 
 shared_library(
     LIBRARY + '3',
-    [],
+    [join_paths(python_source, 'PC', 'python3dll.c')],
     name_prefix: '',
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
