@@ -30,6 +30,8 @@ sqlite3_lib = sqlite3_subproject.get_variable('sqlib')
 sqlite3_inc = sqlite3_subproject.get_variable('sqinc')
 
 ffi_lib = compiler.find_library('ffi', required : false)
+ssl_lib = compiler.find_library('ssl', required: false)
+crypto_lib = compiler.find_library('crypto', required: false)
 
 #
 # COMPILER OPTIONS
@@ -1854,3 +1856,44 @@ if ffi_lib.found()
         name_suffix : extension_suffix,
     )
 endif
+
+if ssl_lib.found() and crypto_lib.found()
+
+    SSL_ARGS = []
+    SSL_DEPS = [ssl_lib, crypto_lib]
+    if host_machine.system()=='windows'
+        SSL_ARGS += ['-D_MSC_VER']
+        SSL_DEPS += [compiler.find_library('crypt32', required : true)]
+    endif
+
+    
+    shared_module(
+        '_ssl',
+        [join_paths(python_source, 'Modules', '_ssl.c',)],
+        include_directories : [extension_includes],
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST + SSL_ARGS,
+        install : true,
+        install_dir: extension_path,
+        dependencies : SYSLIBS + LIBS + SSL_DEPS,
+        link_with: [libpython],
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
+    
+    shared_module(
+        '_hashlib',
+        [join_paths(python_source, 'Modules', '_hashopenssl.c',)],
+        include_directories : [extension_includes],
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+        install : true,
+        install_dir: extension_path,
+        dependencies : SYSLIBS + LIBS + SSL_DEPS,
+        link_with: [libpython],
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
+
+endif
+
+
+                           
