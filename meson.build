@@ -825,15 +825,17 @@ libpython = python_libraries.get_shared_lib()
 
 # PEP 384 define ABI compatibility libraries
 
-shared_library(
-    LIBRARY + '3',
-    [join_paths(python_source, 'PC', 'python3dll.c')],
-    name_prefix: '',
-    include_directories : python_include,
-    c_args : PY_CORE_CFLAGS,
-    install: true,
-    link_with: libpython,
-)
+if host_machine.system()=='windows'
+    shared_library(
+        LIBRARY + '3',
+        [join_paths(python_source, 'PC', 'python3dll.c')],
+        name_prefix: '',
+        include_directories : python_include,
+        c_args : PY_CORE_CFLAGS,
+        install: true,
+        link_with: libpython,
+    )
+endif
 
 
 # export_dynamic might be used here to be able to build the modules
