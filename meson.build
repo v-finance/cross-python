@@ -244,6 +244,7 @@ conf_data.set('HAVE_STDLIB_H', compiler.check_header('stdlib.h'))
 conf_data.set('HAVE_STDINT_H', compiler.check_header('stdint.h'))
 conf_data.set('HAVE_ERRNO_H', compiler.check_header('errno.h'))
 conf_data.set('HAVE_UNISTD_H', compiler.check_header('unistd.h'))
+
 conf_data.set('HAVE_STDDEF_H', compiler.check_header('stddef.h'))
 
 conf_data.set('HAVE_ALLOCA_H', compiler.check_header('alloca.h'))
@@ -304,6 +305,11 @@ conf_data.set('HAVE_LOG2', compiler.has_function('log2'))
 conf_data.set('HAVE_ROUND', compiler.has_function('round'))
 conf_data.set('HAVE_TGAMMA', compiler.has_function('tgamma'))
     
+conf_data.set('HAVE_WAIT3', compiler.has_function('wait3'))
+conf_data.set('HAVE_WAIT4', compiler.has_function('wait4'))
+conf_data.set('HAVE_WAITID', compiler.has_function('waitid'))
+conf_data.set('HAVE_WAITPID', compiler.has_function('waitpid'))
+
 conf_data.set('HAVE_WMEMCMP', compiler.has_function('wmemcmp'))
 conf_data.set('HAVE_REALPATH', compiler.has_function('realpath'))
 conf_data.set('HAVE_GETPID', compiler.has_function('getpid'))
@@ -1834,21 +1840,21 @@ foreach source:ctypes_sources
 endforeach
 
 FFI_ARGS = []
+FFI_INCLUDES = []
 if host_machine.system()=='windows'
+    FFI_INCLUDES += include_directories([
+        '/usr/i686-w64-mingw32/sys-root/mingw/lib/libffi-3.1/include/'
+    ])
     if host_machine.cpu_family()=='x86_64'
         FFI_ARGS += ['-DMS_WIN64']
     endif
 endif
 
-ffi_includes = include_directories([
-    '/usr/i686-w64-mingw32/sys-root/mingw/lib/libffi-3.1/include/'
-])
-
 if ffi_lib.found()
     shared_module(
         '_ctypes',
         CTYPES_SOURCES,
-        include_directories : [extension_includes, ffi_includes],
+        include_directories : [extension_includes, FFI_INCLUDES],
         c_args: PY_CFLAGS + PY_CFLAGS_NODIST + FFI_ARGS,
         install : true,
         install_dir: extension_path,
