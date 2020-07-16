@@ -275,10 +275,12 @@ conf_data.set('HAVE_LINUX_CAN_H', compiler.check_header('linux/can.h'))
 conf_data.set('HAVE_LINUX_CAN_RAW_H', compiler.check_header('linux/can/raw.h'))
 conf_data.set('HAVE_LINUX_NETLINK_H', compiler.check_header('linux/netlink.h'))
 conf_data.set('HAVE_LINUX_RANDOM_H', compiler.check_header('linux/random.h'))
-conf_data.set('HAVE_LINUX_TIPC_H', compiler.check_header('linux/tipc.'))
+conf_data.set('HAVE_LINUX_TIPC_H', compiler.check_header('linux/tipc.h'))
+conf_data.set('HAVE_LINUX_VM_SOCKETS_H', compiler.check_header('linux/vm_sockets.h'))
 conf_data.set('HAVE_MEMORY_H', compiler.check_header('memory.h'))
 conf_data.set('HAVE_NCURSES_H', compiler.check_header('ncurses.h'))
 conf_data.set('HAVE_NDIR_H', compiler.check_header('ndir.h'))
+conf_data.set('HAVE_NET_IF_H', compiler.check_header('net/if.h'))
 conf_data.set('HAVE_STRINGS_H', compiler.check_header('strings.h'))
 conf_data.set('HAVE_STRING_H', compiler.check_header('string.h'))
 conf_data.set('HAVE_WCHAR_H', compiler.check_header('wchar.h'))
@@ -286,6 +288,7 @@ conf_data.set('HAVE_SIGNAL_H', compiler.check_header('signal.h'))
 conf_data.set('HAVE_UTIME_H', compiler.check_header('utime.h'))
 conf_data.set('HAVE_DIRECT_H', compiler.check_header('direct.h'))
 conf_data.set('HAVE_IO_H', compiler.check_header('io.h'))
+conf_data.set('HAVE_POLL_H', compiler.check_header('poll.h'))
 conf_data.set('HAVE_PROCESS_H', compiler.check_header('process.h'))
 
 # check availability of functions
@@ -301,9 +304,10 @@ conf_data.set('HAVE_TIMES', compiler.has_function('times'))
 conf_data.set('HAVE_MKTIME', compiler.has_function('mktime'))
 conf_data.set('HAVE_CLOCK_GETTIME', compiler.has_function('clock_gettime'))
 conf_data.set('HAVE_CLOCK', compiler.has_function('clock'))
+conf_data.set('HAVE_EPOLL', compiler.has_function('epoll'))
+conf_data.set('HAVE_EPOLL_CREATE1', compiler.has_function('epoll_create1'))
+
 conf_data.set('HAVE_FTRUNCATE', compiler.has_function('ftruncate'))
-
-
 conf_data.set('HAVE_GETADDRINFO', compiler.has_function('getaddrinfo'))
 conf_data.set('HAVE_GETC_UNLOCKED', compiler.has_function('getc_unlocked'))
 conf_data.set('HAVE_GETENTROPY', compiler.has_function('getentropy'))
@@ -352,10 +356,21 @@ conf_data.set('HAVE_LINKAT', compiler.has_function('linkat'))
 # HAVE_READLINK should not just be defined, but should have a value
 # conf_data.set('HAVE_READLINK', compiler.has_function('readlink'))
 conf_data.set('HAVE_PAUSE', compiler.has_function('pause'))
+conf_data.set('HAVE_POLL', compiler.has_function('poll'))
 conf_data.set('HAVE_PTHREAD_SIGMASK', compiler.has_function('sigmask'))
+
 conf_data.set('HAVE_READLINKAT', compiler.has_function('readlinkat'))
+
 conf_data.set('HAVE_SEM_UNLINK', compiler.has_function('sem_unlink'))
 conf_data.set('HAVE_SHM_UNLINK', compiler.has_function('shm_unlink'))
+conf_data.set('HAVE_SOCKADDR_ALG', compiler.compiles('''
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <linux/if_alg.h>
+    
+    struct sockaddr_alg s;
+''', name: 'sockaddr_alg'))
+conf_data.set('HAVE_SOCKETPAIR', compiler.has_function('socketpair'))
 # SYMLINKAT should not just be defined, but should have a value
 # conf_data.set('HAVE_SYMLINKAT', compiler.has_function('symlinkat'))
 conf_data.set('HAVE_TRUNCATE', compiler.has_function('truncate'))
