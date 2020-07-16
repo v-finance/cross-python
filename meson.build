@@ -1907,6 +1907,46 @@ if ffi_lib.found()
     )
 endif
 
+# Hye-Shik Chang's CJKCodecs modules.
+codecs = ['kr', 'jp', 'cn', 'tw', 'hk', 'iso2022']
+MULTIBYTECODEC_SOURCES = [join_paths(python_source, 'Modules', 'cjkcodecs', 'multibytecodec.c')]
+foreach codec:codecs
+    MULTIBYTECODEC_SOURCES += join_paths(python_source, 'Modules', 'cjkcodecs', '_codecs_'+codec+'.c')
+endforeach
+
+shared_module(
+    '_multibytecodec',
+    MULTIBYTECODEC_SOURCES,
+    include_directories : [extension_includes],
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    install_dir: extension_path,
+    dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
+# Richard Oudkerk's multiprocessing module
+MULTIPROCESSING_SOURCES = [join_paths(python_source, 'Modules', '_multiprocessing', 'multiprocessing.c')]
+if host_machine.system()=='windows'
+    MULTIPROCESSING_SOURCES += join_paths(python_source, 'Modules', '_multiprocessing', 'semaphore.c')
+endif
+# incomplete in case of non windows, more ifs are needed to get the sources/libs
+
+shared_module(
+    '_multiprocessing',
+    MULTIPROCESSING_SOURCES,
+    include_directories : [extension_includes],
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    install : true,
+    install_dir: extension_path,
+    dependencies : SYSLIBS + LIBS,
+    link_with: [libpython],
+    name_prefix : extension_prefix,
+    name_suffix : extension_suffix,
+)
+
 if ssl_lib.found() and crypto_lib.found()
 
     SSL_ARGS = []
