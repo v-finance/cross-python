@@ -170,6 +170,8 @@ conf_data = configuration_data()
 # on Linux, so we need _GNU_SOURCE to re-enable them (makedev, tm_zone).
 conf_data.set('_GNU_SOURCE', '1')  # Define on Linux to activate all library features
 conf_data.set('_PYTHONFRAMEWORK', '""')
+conf_data.set('WITH_DOC_STRINGS', 1)
+conf_data.set('PY_COERCE_C_LOCALE', 1)
 
 # check size of data types
 
@@ -286,6 +288,10 @@ conf_data.set('HAVE_DIRECT_H', compiler.check_header('direct.h'))
 conf_data.set('HAVE_IO_H', compiler.check_header('io.h'))
 conf_data.set('HAVE_PROCESS_H', compiler.check_header('process.h'))
 
+# check availability of functions
+
+# turn ALARM of, since turning it on blocks the io tests
+# conf_data.set('HAVE_ALARM', compiler.has_function('alarm'))
 conf_data.set('HAVE_CHOWN', compiler.has_function('chown'))
 conf_data.set('HAVE_FCHOWN', compiler.has_function('fchown'))
 conf_data.set('HAVE_FCHOWNAT', compiler.has_function('fchownat'))
@@ -296,10 +302,57 @@ conf_data.set('HAVE_MKTIME', compiler.has_function('mktime'))
 conf_data.set('HAVE_CLOCK_GETTIME', compiler.has_function('clock_gettime'))
 conf_data.set('HAVE_CLOCK', compiler.has_function('clock'))
 conf_data.set('HAVE_FTRUNCATE', compiler.has_function('ftruncate'))
+
+
+conf_data.set('HAVE_GETADDRINFO', compiler.has_function('getaddrinfo'))
+conf_data.set('HAVE_GETC_UNLOCKED', compiler.has_function('getc_unlocked'))
+conf_data.set('HAVE_GETENTROPY', compiler.has_function('getentropy'))
+conf_data.set('HAVE_GETGRGID_R', compiler.has_function('getgrgid_r'))
+conf_data.set('HAVE_GETGRNAM_R', compiler.has_function('getgrnam_r'))
+conf_data.set('HAVE_GETGROUPLIST', compiler.has_function('getgrouplist'))
+conf_data.set('HAVE_GETGROUPS', compiler.has_function('getgroups'))
+#conf_data.set('HAVE_GETHOSTBYNAME_R', compiler.has_function('gethostbyname_r'))
+conf_data.set('HAVE_GETHOSTBYNAME_R_6_ARG', compiler.has_function('gethostbyname_r'))
+conf_data.set('HAVE_GETLOADAVG', compiler.has_function('getloadavg'))
+conf_data.set('HAVE_GETNAMEINFO', compiler.has_function('getnameinfo'))
+conf_data.set('HAVE_GETPAGESIZE', compiler.has_function('getpagesize'))
+conf_data.set('HAVE_GETPGID', compiler.has_function('getpgid'))
+conf_data.set('HAVE_GETPGRP', compiler.has_function('getpgrp'))
+conf_data.set('HAVE_GETPRIORITY', compiler.has_function('getpriority'))
+conf_data.set('HAVE_GETPWENT', compiler.has_function('getpwent'))
+conf_data.set('HAVE_GETPWNAM_R', compiler.has_function('getpwnam_r'))
+conf_data.set('HAVE_GETRANDOM', compiler.has_function('getrandom'))
+conf_data.set('HAVE_GETRANDOM_SYSCALL', compiler.links('''
+
+    #include <unistd.h>
+    #include <sys/syscall.h>
+    #include <linux/random.h>
+
+    int main() {
+        char buffer[1];
+        const size_t buflen = sizeof(buffer);
+        const int flags = GRND_NONBLOCK;
+        /* ignore the result, Python checks for ENOSYS and EAGAIN at runtime */
+        (void)syscall(SYS_getrandom, buffer, buflen, flags);
+        return 0;
+    }
+''', name: 'getrandom_syscall'))
+conf_data.set('HAVE_GETRESGID', compiler.has_function('getresgid'))
+conf_data.set('HAVE_GETSID', compiler.has_function('getsid'))
+conf_data.set('HAVE_GETSPENT', compiler.has_function('getspent'))
+conf_data.set('HAVE_GETSPNAM', compiler.has_function('getspnam'))
+conf_data.set('HAVE_GETTIMEOFDAY', compiler.has_function('gettimeofday'))
+conf_data.set('HAVE_GETITIMER', compiler.has_function('getitimer'))
+conf_data.set('HAVE_GETWD', compiler.has_function('getwd'))
+
+conf_data.set('HAVE_SETITIMER', compiler.has_function('setitimer'))
+
 conf_data.set('HAVE_LINK', compiler.has_function('link'))
 conf_data.set('HAVE_LINKAT', compiler.has_function('linkat'))
 # HAVE_READLINK should not just be defined, but should have a value
 # conf_data.set('HAVE_READLINK', compiler.has_function('readlink'))
+conf_data.set('HAVE_PAUSE', compiler.has_function('pause'))
+conf_data.set('HAVE_PTHREAD_SIGMASK', compiler.has_function('sigmask'))
 conf_data.set('HAVE_READLINKAT', compiler.has_function('readlinkat'))
 conf_data.set('HAVE_SEM_UNLINK', compiler.has_function('sem_unlink'))
 conf_data.set('HAVE_SHM_UNLINK', compiler.has_function('shm_unlink'))
@@ -324,6 +377,8 @@ conf_data.set('HAVE_LOG1P', compiler.has_function('log1p'))
 conf_data.set('HAVE_LOG2', compiler.has_function('log2'))
 conf_data.set('HAVE_MKNOD', compiler.has_function('mknod'))
 conf_data.set('HAVE_MKNODAT', compiler.has_function('mknodat'))
+conf_data.set('HAVE_PUTENV', compiler.has_function('putenv'))
+
 conf_data.set('HAVE_ROUND', compiler.has_function('round'))
 
 conf_data.set('HAVE_GETPWUID_R', compiler.has_function('getpwuid_r'))
@@ -332,8 +387,22 @@ conf_data.set('HAVE_SETEUID', compiler.has_function('seteuid'))
 conf_data.set('HAVE_SETRESUID', compiler.has_function('setresuid'))
 conf_data.set('HAVE_SETREUID', compiler.has_function('setreuid'))
 conf_data.set('HAVE_SETUID', compiler.has_function('setuid'))
+
+conf_data.set('HAVE_SETEGID', compiler.has_function('setegid'))
+conf_data.set('HAVE_SETGID', compiler.has_function('setgid'))
+conf_data.set('HAVE_SETGROUPS', compiler.has_function('setgroups'))
+conf_data.set('HAVE_SETHOSTNAME', compiler.has_function('sethostname'))
+conf_data.set('HAVE_SETLOCALE', compiler.has_function('setlocale'))
+conf_data.set('HAVE_SETPGID', compiler.has_function('setpgid'))
+conf_data.set('HAVE_SETPGRP', compiler.has_function('setpgrp'))
+conf_data.set('HAVE_SETPRIORITY', compiler.has_function('setpriority'))
+conf_data.set('HAVE_SETREGID', compiler.has_function('setregid'))
+conf_data.set('HAVE_SETRESGID', compiler.has_function('setresgid'))
+conf_data.set('HAVE_SETSID', compiler.has_function('setsid'))
+conf_data.set('HAVE_SETVBUF', compiler.has_function('setvbuf'))
+
 conf_data.set('HAVE_TGAMMA', compiler.has_function('tgamma'))
-    
+conf_data.set('HAVE_UNSETENV', compiler.has_function('unsetenv'))
 conf_data.set('HAVE_WAIT3', compiler.has_function('wait3'))
 conf_data.set('HAVE_WAIT4', compiler.has_function('wait4'))
 conf_data.set('HAVE_WAITID', compiler.has_function('waitid'))
@@ -358,6 +427,8 @@ conf_data.set('HAVE_FSYNC', compiler.has_function('fsync') or compiler.has_funct
 conf_data.set('HAVE_COMMIT', compiler.has_function('_commit'))
 conf_data.set('HAVE_FORK', compiler.has_function('fork') and not mingw)
 conf_data.set('HAVE_DLOPEN', compiler.has_function('dlopen', prefix: '#include <dlfcn.h>', args: ['-ldl']))
+conf_data.set('HAVE_WCSCOLL', compiler.has_function('wcscoll', prefix: '#include <wchar.h>'))
+conf_data.set('HAVE_WCSXFRM', compiler.has_function('wcsxfrm', prefix: '#include <wchar.h>'))
 
 conf_data.set('MS_WINDOWS', compiler.check_header('windows.h'))
 conf_data.set('NT_THREADS', compiler.check_header('windows.h'))
@@ -378,6 +449,7 @@ conf_data.set('Py_ENABLE_SHARED', 1)
 conf_data.set('WITH_PYMALLOC', 1)
 conf_data.set('DOUBLE_IS_LITTLE_ENDIAN_IEEE754', 1)
 conf_data.set('HAVE_GCC_ASM_FOR_X87', 1)
+conf_data.set('HAVE_WORKING_TZSET', compiler.has_function('tzset', prefix: '#include <time.h>'))
 
 
 #
