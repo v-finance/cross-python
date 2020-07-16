@@ -1563,8 +1563,36 @@ shared_module(
     name_suffix : extension_suffix,
 )
 
-# POSIX subprocess module helper.
+# Modules with some UNIX dependencies -- on by default:
+# (If you have a really backward UNIX, select and socket may not be
+# supported...)
 if host_machine.system()!='windows'
+    # fcntl(2) and ioctl(2)
+    shared_module(
+        'fcntl',
+        [join_paths(python_source, 'Modules', 'fcntlmodule.c')],
+        include_directories : python_include,
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+        install : true,
+        install_dir: extension_path,
+        dependencies : SYSLIBS + LIBS,
+        link_with: [libpython],
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
+    shared_module(
+        'grp',
+        [join_paths(python_source, 'Modules', 'grpmodule.c')],
+        include_directories : python_include,
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+        install : true,
+        install_dir: extension_path,
+        dependencies : SYSLIBS + LIBS,
+        link_with: [libpython],
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
+    # POSIX subprocess module helper.
     shared_module(
         '_posixsubprocess',
         [join_paths(python_source, 'Modules', '_posixsubprocess.c')],
