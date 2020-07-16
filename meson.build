@@ -1886,6 +1886,18 @@ if ffi_lib.found()
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
     )
+    shared_module(
+        '_ctypes_test',
+        [join_paths(python_source, 'Modules', '_ctypes', '_ctypes_test.c')],
+        include_directories : [extension_includes, FFI_INCLUDES],
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST + FFI_ARGS,
+        install : true,
+        install_dir: extension_path,
+        dependencies : SYSLIBS + LIBS + [ffi_lib],
+        link_with: [libpython],
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
 endif
 
 if ssl_lib.found() and crypto_lib.found()
