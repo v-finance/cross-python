@@ -286,8 +286,13 @@ conf_data.set('HAVE_DIRECT_H', compiler.check_header('direct.h'))
 conf_data.set('HAVE_IO_H', compiler.check_header('io.h'))
 conf_data.set('HAVE_PROCESS_H', compiler.check_header('process.h'))
 
+conf_data.set('HAVE_CHOWN', compiler.has_function('chown'))
+conf_data.set('HAVE_FCHOWN', compiler.has_function('fchown'))
+conf_data.set('HAVE_FCHOWNAT', compiler.has_function('fchownat'))
+conf_data.set('HAVE_LCHOWN', compiler.has_function('lchown'))
 conf_data.set('HAVE_TIMEGM', compiler.has_function('timegm'))
 conf_data.set('HAVE_TIMES', compiler.has_function('times'))
+conf_data.set('HAVE_MKTIME', compiler.has_function('mktime'))
 conf_data.set('HAVE_CLOCK_GETTIME', compiler.has_function('clock_gettime'))
 conf_data.set('HAVE_CLOCK', compiler.has_function('clock'))
 conf_data.set('HAVE_LSTAT', compiler.has_function('lstat'))
@@ -1499,7 +1504,32 @@ if host_machine.system()!='windows'
         name_prefix : extension_prefix,
         name_suffix : extension_suffix,
     )
-
+    # Steen Lumholt's termios module
+    shared_module(
+        'termios',
+        [join_paths(python_source, 'Modules', 'termios.c')],
+        include_directories : extension_includes,
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+        install : true,
+        install_dir: extension_path,
+        dependencies : SYSLIBS + LIBS,
+        link_with: [libpython],
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
+    # Jeremy Hylton's rlimit interface
+    shared_module(
+        'resource',
+        [join_paths(python_source, 'Modules', 'resource.c')],
+        include_directories : extension_includes,
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+        install : true,
+        install_dir: extension_path,
+        dependencies : SYSLIBS + LIBS,
+        link_with: [libpython],
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
 endif
 
 # Stefan Krah's _decimal module
