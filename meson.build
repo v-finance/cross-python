@@ -384,6 +384,7 @@ conf_data.set('HAVE_ATANH', compiler.has_function('atanh'))
 conf_data.set('HAVE_ERF', compiler.has_function('erf'))
 conf_data.set('HAVE_ERFC', compiler.has_function('erfc'))
 conf_data.set('HAVE_EXPM1', compiler.has_function('expm1'))
+conf_data.set('HAVE_UNAME', compiler.has_function('uname'))
 conf_data.set('HAVE_FINITE', compiler.has_function('finite'))
 conf_data.set('HAVE_GAMMA', compiler.has_function('gamma'))
 conf_data.set('HAVE_HYPOT', compiler.has_function('hypot'))
@@ -1122,18 +1123,6 @@ custom_target(
     install: true
 )
 
-# make the configuration variables available at runtime by sysconfig.py
-# example file name : _sysconfigdata__linux_x86_64-linux-gnu.py
-# this is now a stub, but should contain all configuration variables
-custom_target(
-    '_sysconfigdata_.py',
-    command : [echo, '-e', 'build_time_vars = {}'],
-    output  : '_sysconfigdata_' + ABIFLAGS + '_' + MACHDEP + '_' + MULTIARCH + '.py',
-    capture: true,
-    install_dir: join_paths(get_option('bindir'), prefix),
-    install: true
-)
-
 #
 # Now the core python interpreter works.
 # The next step is to build various extension modules, these steps are
@@ -1156,6 +1145,36 @@ endif
 
 extension_prefix = ''
 
+# make the configuration variables available at runtime by sysconfig.py
+# example file name : _sysconfigdata__linux_x86_64-linux-gnu.py
+# this is now a stub, but should contain all configuration variables
+
+sysconfigdata = {
+    'CC': '',
+    'CXX': '',
+    'CFLAGS': '',
+    'CCSHARED': '',
+    'LDSHARED': '',
+    'SHLIB_SUFFIX': '',
+    'AR': '',
+    'ARFLAGS': '',
+    'EXT_SUFFIX': extension_suffix,
+}
+
+sysconfigdata_lines = ['build_time_vars = {\n']
+foreach key, val : sysconfigdata
+    sysconfigdata_lines += ['    "' + key + '": "' + val + '",\n'] 
+endforeach
+sysconfigdata_lines += ['}']
+
+custom_target(
+    '_sysconfigdata_.py',
+    command : [echo, '-e',] + sysconfigdata_lines,
+    output  : '_sysconfigdata_' + ABIFLAGS + '_' + MACHDEP + '_' + MULTIARCH + '.py',
+    capture: true,
+    install_dir: join_paths(get_option('bindir'), prefix),
+    install: true
+)
 
 socketmodule_c_generator = generator(
     cat,
