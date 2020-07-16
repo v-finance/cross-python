@@ -395,6 +395,9 @@ conf_data.set('HAVE_MKNOD', compiler.has_function('mknod'))
 conf_data.set('HAVE_MKNODAT', compiler.has_function('mknodat'))
 conf_data.set('HAVE_PUTENV', compiler.has_function('putenv'))
 
+if compiler.has_function('readlink')
+    conf_data.set('HAVE_READLINK', '1')
+endif
 conf_data.set('HAVE_ROUND', compiler.has_function('round'))
 
 conf_data.set('HAVE_GETPWUID_R', compiler.has_function('getpwuid_r'))
