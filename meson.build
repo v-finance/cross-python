@@ -306,6 +306,13 @@ conf_data.set('HAVE_LGAMMA', compiler.has_function('lgamma'))
 conf_data.set('HAVE_LOG1P', compiler.has_function('log1p'))
 conf_data.set('HAVE_LOG2', compiler.has_function('log2'))
 conf_data.set('HAVE_ROUND', compiler.has_function('round'))
+
+conf_data.set('HAVE_GETPWUID_R', compiler.has_function('getpwuid_r'))
+conf_data.set('HAVE_GETRESUID', compiler.has_function('getresuid'))
+conf_data.set('HAVE_SETEUID', compiler.has_function('seteuid'))
+conf_data.set('HAVE_SETRESUID', compiler.has_function('setresuid'))
+conf_data.set('HAVE_SETREUID', compiler.has_function('setreuid'))
+conf_data.set('HAVE_SETUID', compiler.has_function('setuid'))
 conf_data.set('HAVE_TGAMMA', compiler.has_function('tgamma'))
     
 conf_data.set('HAVE_WAIT3', compiler.has_function('wait3'))
