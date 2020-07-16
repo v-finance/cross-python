@@ -53,6 +53,9 @@ API_VERSION = ''.join([VERSION_ARRAY[0], VERSION_ARRAY[1]])
 
 warning('Building CPython version : ' + VERSION)
 
+ABIFLAGS = ''
+# this should be the platform triplet
+MULTIARCH = host_machine.cpu() + '-' + host_machine.system()
 SOABI = 'cpython-' + API_VERSION + 'm-x86_64-linux-gnu'
 VPATH=          'sourcedir'
 
@@ -561,7 +564,6 @@ foreach s : [
     'bootstrap_hash.c',
     'structmember.c',
     'symtable.c',
-    'sysmodule.c',
     'traceback.c',
     'getopt.c',
     'pystrcmp.c',
@@ -731,6 +733,15 @@ dynload = static_library(
     pic : true,
 )
 
+sysmodule = static_library(
+    'sysmodule', [
+        join_paths(python_source, 'Python', 'sysmodule.c'),
+    ],
+    include_directories : python_include,
+    c_args : PY_CORE_CFLAGS + ['-DABIFLAGS="'+ABIFLAGS+'"', '-DMULTIARCH="'+MULTIARCH+'"'],
+    pic : true,
+)
+
 GETPATH_SRC = []
 if host_machine.system()=='windows'
     GETPATH_SRC += [join_paths(python_source, 'PC', 'getpathp.c')]
@@ -823,7 +834,7 @@ python_libraries = both_libraries(
     include_directories : python_include,
     c_args : PY_CORE_CFLAGS,
     install : true,
-    link_with : MODLIBS + [dynload, getpath, platform_obj],
+    link_with : MODLIBS + [dynload, getpath, platform_obj, sysmodule],
     dependencies : SYSLIBS + LIBS,
 )
 
@@ -993,6 +1004,18 @@ custom_target(
     output  : 'python._pth',
     capture: true,
     install_dir: get_option('bindir'),
+    install: true
+)
+
+# make the configuration variables available at runtime by sysconfig.py
+# example file name : _sysconfigdata__linux_x86_64-linux-gnu.py
+# this is now a stub, but should contain all configuration variables
+custom_target(
+    '_sysconfigdata_.py',
+    command : [echo, '-e', 'build_time_vars = {}'],
+    output  : '_sysconfigdata_' + ABIFLAGS + '_' + MACHDEP + '_' + MULTIARCH + '.py',
+    capture: true,
+    install_dir: join_paths(get_option('bindir'), prefix),
     install: true
 )
 
