@@ -2091,15 +2091,10 @@ if ffi_lib.found()
 endif
 
 # Hye-Shik Chang's CJKCodecs modules.
-codecs = ['kr', 'jp', 'cn', 'tw', 'hk', 'iso2022']
-MULTIBYTECODEC_SOURCES = [join_paths(python_source, 'Modules', 'cjkcodecs', 'multibytecodec.c')]
-foreach codec:codecs
-    MULTIBYTECODEC_SOURCES += join_paths(python_source, 'Modules', 'cjkcodecs', '_codecs_'+codec+'.c')
-endforeach
 
 shared_module(
     '_multibytecodec',
-    MULTIBYTECODEC_SOURCES,
+    [join_paths(python_source, 'Modules', 'cjkcodecs', 'multibytecodec.c')],
     include_directories : [extension_includes],
     c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
     install : true,
@@ -2109,6 +2104,22 @@ shared_module(
     name_prefix : extension_prefix,
     name_suffix : extension_suffix,
 )
+
+codecs = ['kr', 'jp', 'cn', 'tw', 'hk', 'iso2022']
+foreach codec:codecs
+    shared_module(
+        '_codecs_' + codec,
+        [join_paths(python_source, 'Modules', 'cjkcodecs', '_codecs_'+codec+'.c')],
+        include_directories : [extension_includes],
+        c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+        install : true,
+        install_dir: extension_path,
+        dependencies : SYSLIBS + LIBS,
+        link_with: [libpython],
+        name_prefix : extension_prefix,
+        name_suffix : extension_suffix,
+    )
+endforeach
 
 # Richard Oudkerk's multiprocessing module
 MULTIPROCESSING_SOURCES = [join_paths(python_source, 'Modules', '_multiprocessing', 'multiprocessing.c')]
