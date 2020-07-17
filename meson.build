@@ -453,8 +453,18 @@ conf_data.set('MS_WINDOWS', compiler.check_header('windows.h'))
 conf_data.set('NT_THREADS', compiler.check_header('windows.h'))
 conf_data.set('HAVE_WCSFTIME', compiler.has_function('wcsftime', prefix: '#include <wchar.h>\n#include <time.h>'))
 conf_data.set('HAVE_STRFTIME', compiler.has_function('strftime', prefix: '#include <time.h>'))
-    
+
+# check members of structs
+
+conf_data.set('HAVE_STRUCT_STAT_ST_RDEV', compiler.has_member('struct stat', 'st_rdev', prefix : '#include<sys/stat.h>'))
+conf_data.set('HAVE_STRUCT_STAT_ST_BLKSIZE', compiler.has_member('struct stat', 'st_blksize', prefix : '#include<sys/stat.h>'))
+conf_data.set('HAVE_STRUCT_STAT_ST_FLAGS', compiler.has_member('struct stat', 'st_flags', prefix : '#include<sys/stat.h>'))
+conf_data.set('HAVE_STRUCT_STAT_ST_GEN', compiler.has_member('struct stat', 'st_gen', prefix : '#include<sys/stat.h>'))
+conf_data.set('HAVE_STRUCT_STAT_ST_BIRTHTIME', compiler.has_member('struct stat', 'st_birthtime', prefix : '#include<sys/stat.h>'))
+conf_data.set('HAVE_STRUCT_STAT_ST_BLOCKS', compiler.has_member('struct stat', 'st_blocks', prefix : '#include<sys/stat.h>'))
+
 # @todo : more complex checks in configure.ac
+
 conf_data.set('HAVE_STD_ATOMIC', compiler.check_header('stdatomic.h')) # line 5397
 conf_data.set('HAVE_BUILTIN_ATOMIC', compiler.check_header('stdatomic.h'))
 conf_data.set('HAVE_STDARG_PROTOTYPES', compiler.check_header('stdarg.h')) # line 4057
