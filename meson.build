@@ -356,7 +356,9 @@ conf_data.set('HAVE_LINKAT', compiler.has_function('linkat'))
 # conf_data.set('HAVE_READLINK', compiler.has_function('readlink'))
 conf_data.set('HAVE_PAUSE', compiler.has_function('pause'))
 conf_data.set('HAVE_POLL', compiler.has_function('poll'))
-conf_data.set('HAVE_PTHREAD_SIGMASK', compiler.has_function('sigmask'))
+conf_data.set('HAVE_PTHREAD_SIGMASK', compiler.has_function('pthread_sigmask', args: '-pthread', prefix: '#include <signal.h>\n#include <pthread.h>'))
+conf_data.set('HAVE_PTHREAD_GETCPUCLOCKID', compiler.has_function('pthread_getcpuclockid', args: '-pthread', prefix: '#include <pthread.h>'))
+conf_data.set('HAVE_PTHREAD_KILL', compiler.has_function('pthread_kill', args: '-pthread', prefix: '#include <signal.h>'))
 
 conf_data.set('HAVE_READLINKAT', compiler.has_function('readlinkat'))
 
