@@ -72,7 +72,10 @@ if host_machine.system()=='windows'
     DYNLOADFILE = 'dynload_win.c' #'dynload_stub.c' # dynload_shlib
 else
     DYNLOADFILE = 'dynload_shlib.c'
-    SYSLIBS += [compiler.find_library('dl', required : true)]
+    SYSLIBS += [
+        compiler.find_library('dl', required : true),
+        compiler.find_library('util', required : false)
+    ]
 endif
 
 # Install prefix for architecture-independent files
@@ -207,6 +210,7 @@ conf_data.set('HAVE_GCC_UINT128_T', compiler.has_type('__uint128_t'))
     
 # check availability of headers
 
+conf_data.set('HAVE_PTY_H', compiler.check_header('pty.h'))
 conf_data.set('HAVE_SYSEXITS_H', compiler.check_header('sys/exits.h'))
 conf_data.set('HAVE_SYS_AUDIOIO_H', compiler.check_header('sys/audioio.h'))
 conf_data.set('HAVE_SYS_BSDTTY_H', compiler.check_header('sys/bsdtty.h'))
@@ -306,6 +310,7 @@ conf_data.set('HAVE_CLOCK', compiler.has_function('clock'))
 conf_data.set('HAVE_EPOLL', compiler.has_function('epoll_create', prefix: '#include <sys/epoll.h>'))
 conf_data.set('HAVE_EPOLL_CREATE1', compiler.has_function('epoll_create1', prefix: '#include <sys/epoll.h>'))
 
+conf_data.set('HAVE_FORKPTY',  compiler.has_function('forkpty', args: '-lutil', prefix: '#include <pty.h>'))
 conf_data.set('HAVE_FTRUNCATE', compiler.has_function('ftruncate'))
 conf_data.set('HAVE_GETADDRINFO', compiler.has_function('getaddrinfo'))
 conf_data.set('HAVE_GETC_UNLOCKED', compiler.has_function('getc_unlocked'))
@@ -352,6 +357,7 @@ conf_data.set('HAVE_SETITIMER', compiler.has_function('setitimer'))
 
 conf_data.set('HAVE_LINK', compiler.has_function('link'))
 conf_data.set('HAVE_LINKAT', compiler.has_function('linkat'))
+conf_data.set('HAVE_OPENPTY', compiler.has_function('openpty', args: '-lutil', prefix: '#include <pty.h>'))
 # HAVE_READLINK should not just be defined, but should have a value
 # conf_data.set('HAVE_READLINK', compiler.has_function('readlink'))
 conf_data.set('HAVE_PAUSE', compiler.has_function('pause'))
@@ -823,7 +829,7 @@ else
             join_paths(python_source, 'Modules', 'posixmodule.c'),
         ],
         include_directories : python_include,
-        c_args : PY_CORE_CFLAGS,
+        c_args : PY_CORE_CFLAGS
     )
     MODOBJS += [[posix, 'posix']]
 endif
