@@ -391,6 +391,14 @@ conf_data.set('HAVE_HYPOT', compiler.has_function('hypot'))
 conf_data.set('HAVE_LGAMMA', compiler.has_function('lgamma'))
 conf_data.set('HAVE_LOG1P', compiler.has_function('log1p'))
 conf_data.set('HAVE_LOG2', compiler.has_function('log2'))
+#conf_data.set('HAVE_MAKEDEV', compiler.has_function('makedev'), prefix: '#include <sys/sysmacros.h>')
+conf_data.set('HAVE_MAKEDEV', compiler.compiles('''
+    #include <sys/sysmacros.h>
+
+    makedev; 
+''', name: 'makedev'))
+conf_data.set('HAVE_MKFIFO', compiler.has_function('mkfifo'), prefix: '#include <sys/stat.h>')
+conf_data.set('HAVE_MKFIFOAT', compiler.has_function('mkfifoat'), prefix: '#include <sys/stat.h>')
 conf_data.set('HAVE_MKNOD', compiler.has_function('mknod'))
 conf_data.set('HAVE_MKNODAT', compiler.has_function('mknodat'))
 conf_data.set('HAVE_PUTENV', compiler.has_function('putenv'))
@@ -462,6 +470,56 @@ conf_data.set('HAVE_STRUCT_STAT_ST_FLAGS', compiler.has_member('struct stat', 's
 conf_data.set('HAVE_STRUCT_STAT_ST_GEN', compiler.has_member('struct stat', 'st_gen', prefix : '#include<sys/stat.h>'))
 conf_data.set('HAVE_STRUCT_STAT_ST_BIRTHTIME', compiler.has_member('struct stat', 'st_birthtime', prefix : '#include<sys/stat.h>'))
 conf_data.set('HAVE_STRUCT_STAT_ST_BLOCKS', compiler.has_member('struct stat', 'st_blocks', prefix : '#include<sys/stat.h>'))
+
+# check availability of constants
+
+if compiler.compiles('''
+    #include <dlfcn.h>
+    int foo = RTLD_DEEPBIND; ''', name: 'RTLD_DEEPBIND')
+    conf_data.set('HAVE_DECL_RTLD_DEEPBIND', '1')
+endif
+
+if compiler.compiles('''
+    #include <dlfcn.h>
+    int foo = RTLD_GLOBAL;''', name: 'RTLD_GLOBAL')
+    conf_data.set('HAVE_DECL_RTLD_GLOBAL', '1')
+endif
+
+if compiler.compiles('''
+    #include <dlfcn.h>
+    int foo = RTLD_LAZY;''', name: 'RTLD_LAZY')
+    conf_data.set('HAVE_DECL_RTLD_LAZY', '1')
+endif
+
+if compiler.compiles('''
+    #include <dlfcn.h>
+    int foo = RTLD_LOCAL;''', name: 'RTLD_LOCAL')
+    conf_data.set('HAVE_DECL_RTLD_LOCAL', '1')
+endif
+   
+if compiler.compiles('''
+    #include <dlfcn.h>
+    int foo = RTLD_MEMBER;''', name: 'RTLD_MEMBER')
+    conf_data.set('HAVE_DECL_RTLD_MEMBER', '1')
+endif
+
+if compiler.compiles('''
+    #include <dlfcn.h>
+    int foo = RTLD_NODELETE;''', name: 'RTLD_NODELETE')
+    conf_data.set('HAVE_DECL_RTLD_NODELETE', '1')
+endif
+
+if compiler.compiles('''
+    #include <dlfcn.h>
+    int foo = RTLD_NOLOAD;''', name: 'RTLD_NOLOAD')
+    conf_data.set('HAVE_DECL_RTLD_NOLOAD', '1')
+endif
+
+if compiler.compiles('''
+    #include <dlfcn.h>
+    int foo = RTLD_NOW;''', name: 'RTLD_NOW')
+    conf_data.set('HAVE_DECL_RTLD_NOW', '1')
+endif
 
 # @todo : more complex checks in configure.ac
 
