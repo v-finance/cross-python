@@ -293,8 +293,7 @@ conf_data.set('HAVE_PROCESS_H', compiler.check_header('process.h'))
 
 # check availability of functions
 
-# turn ALARM of, since turning it on blocks the io tests
-# conf_data.set('HAVE_ALARM', compiler.has_function('alarm'))
+conf_data.set('HAVE_ALARM', compiler.has_function('alarm'))
 conf_data.set('HAVE_CHOWN', compiler.has_function('chown'))
 conf_data.set('HAVE_FCHOWN', compiler.has_function('fchown'))
 conf_data.set('HAVE_FCHOWNAT', compiler.has_function('fchownat'))
@@ -304,8 +303,8 @@ conf_data.set('HAVE_TIMES', compiler.has_function('times'))
 conf_data.set('HAVE_MKTIME', compiler.has_function('mktime'))
 conf_data.set('HAVE_CLOCK_GETTIME', compiler.has_function('clock_gettime'))
 conf_data.set('HAVE_CLOCK', compiler.has_function('clock'))
-conf_data.set('HAVE_EPOLL', compiler.has_function('epoll'))
-conf_data.set('HAVE_EPOLL_CREATE1', compiler.has_function('epoll_create1'))
+conf_data.set('HAVE_EPOLL', compiler.has_function('epoll_create', prefix: '#include <sys/epoll.h>'))
+conf_data.set('HAVE_EPOLL_CREATE1', compiler.has_function('epoll_create1', prefix: '#include <sys/epoll.h>'))
 
 conf_data.set('HAVE_FTRUNCATE', compiler.has_function('ftruncate'))
 conf_data.set('HAVE_GETADDRINFO', compiler.has_function('getaddrinfo'))
@@ -363,6 +362,16 @@ conf_data.set('HAVE_READLINKAT', compiler.has_function('readlinkat'))
 
 conf_data.set('HAVE_SEM_UNLINK', compiler.has_function('sem_unlink'))
 conf_data.set('HAVE_SHM_UNLINK', compiler.has_function('shm_unlink'))
+
+conf_data.set('HAVE_SIGACTION', compiler.has_function('sigaltstack'))
+conf_data.set('HAVE_SIGALTSTACK', compiler.has_function('sigaction'))
+conf_data.set('HAVE_SIGFILLSET', compiler.has_function('sigfillset'))
+conf_data.set('HAVE_SIGINTERRUPT', compiler.has_function('siginterrupt'))
+conf_data.set('HAVE_SIGPENDING', compiler.has_function('sigpending'))
+conf_data.set('HAVE_SIGRELSE', compiler.has_function('sigrelse'))
+conf_data.set('HAVE_SIGTIMEDWAIT', compiler.has_function('sigtimedwait'))
+conf_data.set('HAVE_SIGWAIT', compiler.has_function('sigwait'))
+conf_data.set('HAVE_SIGWAITINFO', compiler.has_function('sigwaitinfo'))
 conf_data.set('HAVE_SOCKADDR_ALG', compiler.compiles('''
     #include <sys/types.h>
     #include <sys/socket.h>
@@ -464,6 +473,8 @@ conf_data.set('HAVE_STRFTIME', compiler.has_function('strftime', prefix: '#inclu
 
 # check members of structs
 
+# Issue #21085: In Cygwin, siginfo_t does not have si_band field.
+conf_data.set('HAVE_SIGINFO_T_SI_BAND', compiler.has_member('siginfo_t', 'si_band', prefix: '#include <signal.h>'))
 conf_data.set('HAVE_STRUCT_STAT_ST_RDEV', compiler.has_member('struct stat', 'st_rdev', prefix : '#include<sys/stat.h>'))
 conf_data.set('HAVE_STRUCT_STAT_ST_BLKSIZE', compiler.has_member('struct stat', 'st_blksize', prefix : '#include<sys/stat.h>'))
 conf_data.set('HAVE_STRUCT_STAT_ST_FLAGS', compiler.has_member('struct stat', 'st_flags', prefix : '#include<sys/stat.h>'))
