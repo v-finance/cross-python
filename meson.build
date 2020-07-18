@@ -1078,6 +1078,9 @@ python_exe = executable(
     # export_dynamic: true,
     # implib: true,
     link_with : [libpython],
+    # evaluate the rpath with : readelf -d ./python
+    # point to shared library
+    install_rpath: join_paths('$ORIGIN', '..', get_option('libdir')),
     dependencies : SYSLIBS + LIBS,
 )
 
