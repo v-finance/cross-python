@@ -18,5 +18,10 @@ pipeline {
                 sh 'ninja -C builddir-x86_64-redhat-linux install'
             }
         }
+        stage('Native test') {
+            steps {
+                sh './x86_64-redhat-linux/bin/python -m test test_float'
+            }
+        }
     }
 }
