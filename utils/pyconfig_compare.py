@@ -8,7 +8,7 @@ import difflib
 import sys
 
 if not len(sys.argv[1])!=2:
-    raise Exception('Please specify 2 paths to pyconfig.h files')
+    raise Exception('Please specify reference and tested pyconfig.h files')
 
 def read_pyconfig(p):
     print('reading {0}'.format(p))
@@ -22,16 +22,17 @@ def read_pyconfig(p):
     defined.sort()
     return defined
     
-defined_1 = read_pyconfig(sys.argv[1])
-defined_2 = read_pyconfig(sys.argv[2])
+reference = read_pyconfig(sys.argv[1])
+tested = read_pyconfig(sys.argv[2])
 
-for defined in defined_1:
-    if defined in defined_2:
-        print('both ', defined)
-        defined_1.remove(defined)
-        defined_2.remove(defined)
+for defined in reference:
+    if defined in tested:
+        print('both', defined)
+        while defined in reference:
+            reference.remove(defined)
+        while defined in tested:
+            tested.remove(defined)
 
-differ = difflib.Differ()
-
-for diffline in differ.compare(defined_1, defined_2):
-    print(diffline)
+for defined in reference:
+    if defined not in tested:
+        print('missing', defined)

@@ -298,6 +298,7 @@ conf_data.set('HAVE_DIRECT_H', compiler.check_header('direct.h'))
 conf_data.set('HAVE_IO_H', compiler.check_header('io.h'))
 conf_data.set('HAVE_POLL_H', compiler.check_header('poll.h'))
 conf_data.set('HAVE_PROCESS_H', compiler.check_header('process.h'))
+conf_data.set('STDC_HEADERS', compiler.check_header('stddef.h'))
 
 # check availability of functions
 
@@ -599,6 +600,20 @@ if host_machine.system()=='windows'
     # MS_WIN32 - Code specific to the MS Win32 (and Win64) API (obsolete, this covers all supported APIs)
     conf_data.set('MS_WIN32', 1) 
     conf_data.set('MS_COREDLL', 1)
+
+    # These variables appear to do nothing but are in PC/pyconfig.h,
+    # included here to have no diffs
+    conf_data.set('USE_SOCKET', 1)
+    conf_data.set('HAVE_LIBSOCKET', 1)
+    conf_data.set('DONT_HAVE_SIG_ALARM', 1)
+    conf_data.set('DONT_HAVE_SIG_PAUSE', 1)
+
+    conf_data.set('COMPILER', '"' + compiler.get_id() + '"')
+    conf_data.set('WITH_THREAD', 1)
+
+    # definition of api
+    # conf_data.set('HAVE_DECLSPEC_DLL', 1)
+
 endif
 
 if mingw
@@ -620,7 +635,7 @@ pyconfig = configure_file(
     output : 'pyconfig.h',
     configuration : conf_data,
 )
-               
+
 #
 # PARSER GENERATOR
 #
