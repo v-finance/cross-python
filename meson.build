@@ -120,7 +120,7 @@ if mingw
         compiler.find_library('ws2_32', required : true), 
         compiler.find_library('shlwapi', required : true), 
         compiler.find_library('iphlpapi', required : true),
-        compiler.find_library('intl', required : true),
+        compiler.find_library('intl', required : false),
     ]
 endif
 
@@ -174,7 +174,9 @@ conf_data = configuration_data()
 conf_data.set('_GNU_SOURCE', '1')  # Define on Linux to activate all library features
 conf_data.set('_PYTHONFRAMEWORK', '""')
 conf_data.set('WITH_DOC_STRINGS', 1)
-conf_data.set('PY_COERCE_C_LOCALE', 1)
+if host_machine.system()!='windows'
+    conf_data.set('PY_COERCE_C_LOCALE', 1)
+endif
 
 # check size of data types
 
@@ -246,6 +248,7 @@ conf_data.set('HAVE_SYS_TIME_H', compiler.check_header('sys/time.h'))
 conf_data.set('HAVE_SYS_TYPES_H', compiler.check_header('sys/types.h'))
 conf_data.set('HAVE_SYS_UIO_H', compiler.check_header('sys/uio.h'))
 conf_data.set('HAVE_SYS_UN_H', compiler.check_header('sys/un.h'))
+conf_data.set('HAVE_SYS_UTIME_H', compiler.check_header('sys/utime.h'))
 conf_data.set('HAVE_SYS_UTSNAME_H', compiler.check_header('sys/utsname.h'))
 conf_data.set('HAVE_SYS_WAIT_H', compiler.check_header('sys/wait.h'))
 conf_data.set('HAVE_SYS_XATTR_H', compiler.check_header('sys/xattr.h'))
@@ -353,6 +356,11 @@ conf_data.set('HAVE_GETTIMEOFDAY', compiler.has_function('gettimeofday'))
 conf_data.set('HAVE_GETITIMER', compiler.has_function('getitimer'))
 conf_data.set('HAVE_GETWD', compiler.has_function('getwd'))
 
+conf_data.set('HAVE_INET_PTON',
+    compiler.has_function('inet_pton', prefix: '#include <arpa/inet.h>') or
+    compiler.has_function('inet_pton', prefix: '#include <ws2tcpip.h>')
+)
+
 conf_data.set('HAVE_SETITIMER', compiler.has_function('setitimer'))
 
 conf_data.set('HAVE_LINK', compiler.has_function('link'))
@@ -362,9 +370,13 @@ conf_data.set('HAVE_OPENPTY', compiler.has_function('openpty', args: '-lutil', p
 # conf_data.set('HAVE_READLINK', compiler.has_function('readlink'))
 conf_data.set('HAVE_PAUSE', compiler.has_function('pause'))
 conf_data.set('HAVE_POLL', compiler.has_function('poll'))
-conf_data.set('HAVE_PTHREAD_SIGMASK', compiler.has_function('pthread_sigmask', args: '-pthread', prefix: '#include <signal.h>\n#include <pthread.h>'))
-conf_data.set('HAVE_PTHREAD_GETCPUCLOCKID', compiler.has_function('pthread_getcpuclockid', args: '-pthread', prefix: '#include <pthread.h>'))
-conf_data.set('HAVE_PTHREAD_KILL', compiler.has_function('pthread_kill', args: '-pthread', prefix: '#include <signal.h>'))
+if host_machine.system()!='windows'
+    # native threads are used on windows, setting these variables triggers
+    # compilation of pthread related code
+    conf_data.set('HAVE_PTHREAD_SIGMASK', compiler.has_function('pthread_sigmask', args: '-pthread', prefix: '#include <signal.h>\n#include <pthread.h>'))
+    conf_data.set('HAVE_PTHREAD_GETCPUCLOCKID', compiler.has_function('pthread_getcpuclockid', args: '-pthread', prefix: '#include <pthread.h>'))
+    conf_data.set('HAVE_PTHREAD_KILL', compiler.has_function('pthread_kill', args: '-pthread', prefix: '#include <signal.h>'))
+endif
 
 conf_data.set('HAVE_READLINKAT', compiler.has_function('readlinkat'))
 
