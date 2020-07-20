@@ -152,6 +152,7 @@ PY_CPPFLAGS=	BASECPPFLAGS + CONFIGURE_CPPFLAGS
 CFLAGSFORSHARED=[]
 # C flags used for building the interpreter object files
 PY_CORE_CFLAGS = PY_CFLAGS + PY_CFLAGS_NODIST + PY_CPPFLAGS + CFLAGSFORSHARED + ['-DPy_BUILD_CORE']
+PY3_DLLNAME = 'python3'
 
 
 #
@@ -974,6 +975,7 @@ GETPATH_C_ARGS += ['-DEXEC_PREFIX="' + exec_prefix + '"']
 GETPATH_C_ARGS += ['-DVERSION="' + VERSION + '"']
 GETPATH_C_ARGS += ['-DVPATH="' + VPATH + '"']
 GETPATH_C_ARGS += ['-DPYTHONPATH="' + PYTHONPATH + '"']
+GETPATH_C_ARGS += ['-DPY3_DLLNAME="' + PY3_DLLNAME + '"']
 
 getpath = static_library(
     'getpath', GETPATH_SRC,
@@ -1963,7 +1965,7 @@ shared_module(
     '_testinternalcapi',
     [join_paths(python_source, 'Modules', '_testinternalcapi.c')],
     include_directories : python_include,
-    c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'],
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST + ['-DPy_BUILD_CORE_MODULE'] + ['-DPY3_DLLNAME="' + PY3_DLLNAME + '"'],
     install : true,
     install_dir: extension_path,
     dependencies : SYSLIBS + LIBS,
