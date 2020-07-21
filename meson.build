@@ -120,7 +120,6 @@ if mingw
         compiler.find_library('ws2_32', required : true), 
         compiler.find_library('shlwapi', required : true), 
         compiler.find_library('iphlpapi', required : true),
-        compiler.find_library('intl', required : false),
     ]
 endif
 
@@ -276,7 +275,7 @@ conf_data.set('HAVE_IEEEFP_H', compiler.check_header('ieeefp.h'))
 conf_data.set('HAVE_INTTYPES_H', compiler.check_header('inttypes.h'))
 conf_data.set('HAVE_IO_H', compiler.check_header('io.h'))
 conf_data.set('HAVE_LANGINFO_H', compiler.check_header('langinfo.h'))
-conf_data.set('HAVE_LIBINTL_H', compiler.check_header('libintl.h'))
+conf_data.set('HAVE_LIBINTL_H', (host_machine.system()!='windows') and compiler.check_header('libintl.h'))
 conf_data.set('HAVE_LIBUTIL_H', compiler.check_header('libutil.h'))
 conf_data.set('HAVE_LINUX_CAN_BCM_H', compiler.check_header('linux/can/bcm.h'))
 conf_data.set('HAVE_LINUX_CAN_H', compiler.check_header('linux/can.h'))
@@ -607,8 +606,10 @@ if host_machine.system()=='windows'
     conf_data.set('HAVE_LIBSOCKET', 1)
     conf_data.set('DONT_HAVE_SIG_ALARM', 1)
     conf_data.set('DONT_HAVE_SIG_PAUSE', 1)
+    conf_data.set('HAVE_LIBNSL', 1)
+    conf_data.set('HAVE_FTIME', 1)
 
-    conf_data.set('COMPILER', '"' + compiler.get_id() + '"')
+    conf_data.set('COMPILER', '"[' + compiler.get_id() + ']"')
     conf_data.set('WITH_THREAD', 1)
 
     # definition of api
