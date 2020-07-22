@@ -116,9 +116,9 @@ if mingw
         # msvcr was needed to get 32bit linked, this appears no longer
         # the case.
         # compiler.find_library('msvcr120', required : true),
-        compiler.find_library('version', required : true), 
-        compiler.find_library('ws2_32', required : true), 
-        compiler.find_library('shlwapi', required : true), 
+        compiler.find_library('version', required : true),
+        compiler.find_library('ws2_32', required : true),
+        compiler.find_library('shlwapi', required : true),
         compiler.find_library('iphlpapi', required : true),
     ]
 endif
@@ -359,7 +359,7 @@ conf_data.set('HAVE_GETWD', compiler.has_function('getwd'))
 
 conf_data.set('HAVE_INET_PTON',
     compiler.has_function('inet_pton', prefix: '#include <arpa/inet.h>') or
-    compiler.has_function('inet_pton', prefix: '#include <ws2tcpip.h>')
+    compiler.has_function('inet_pton', prefix: '#define _WIN32_WINNT 0x0601\n #include <ws2tcpip.h>', args: '-lws2_32')
 )
 
 conf_data.set('HAVE_SETITIMER', compiler.has_function('setitimer'))
@@ -608,9 +608,16 @@ if host_machine.system()=='windows'
     conf_data.set('DONT_HAVE_SIG_PAUSE', 1)
     conf_data.set('HAVE_LIBNSL', 1)
     conf_data.set('HAVE_FTIME', 1)
+    conf_data.set('Py_SOCKET_FD_CAN_BE_GE_FD_SETSIZE', 1)
 
     conf_data.set('COMPILER', '"[' + compiler.get_id() + ']"')
     conf_data.set('WITH_THREAD', 1)
+    # Not increasing the value of FD_SETSIZE will result in
+    # WinError 10051 when attempting to connect to pypi.
+    # In the mingw headers, FD_SETSIZE is set to 512
+    # https://docs.microsoft.com/en-us/windows/win32/winsock/maximum-number-of-sockets-supported-2
+    # this might be due to the use of _MSC_VER in selectmodule.c
+    conf_data.set('FD_SETSIZE', 1024) # is set to 1024.
 
     # definition of api
     # conf_data.set('HAVE_DECLSPEC_DLL', 1)
@@ -1393,11 +1400,16 @@ shared_module(
 )
 
 # select(2); not on ancient System V
+SELECT_CFLAGS = []
+if host_machine.system() == 'windows'
+    SELECT_CFLAGS += ['-D_MSC_VER=1600']
+endif
+
 shared_module(
     'select',
     [join_paths(python_source, 'Modules', 'selectmodule.c')],
     include_directories : extension_includes,
-    c_args: PY_CFLAGS + PY_CFLAGS_NODIST,
+    c_args: PY_CFLAGS + PY_CFLAGS_NODIST + SELECT_CFLAGS,
     install : true,
     install_dir: extension_path,
     dependencies : SYSLIBS + LIBS,
