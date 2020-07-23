@@ -32,6 +32,7 @@ pipeline {
         stage('Win64 install') {
             steps {
                 sh 'ninja -C builddir-x86_64-w64-mingw32 install'
+                sh 'cp /usr/x86_64-w64-mingw32/sys-root/mingw/bin/*.dll ./x86_64-w64-mingw32/bin/'
             }
         }
         stage('Win64 test') {
