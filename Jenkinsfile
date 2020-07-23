@@ -23,5 +23,22 @@ pipeline {
                 sh './x86_64-redhat-linux/bin/python -m test test_float'
             }
         }
+        stage('Win64 build') {
+            steps {
+                sh 'meson -Dsource=../cpython --cross-file cross-files/x86_64-w64-mingw32.txt --prefix="${PWD}/x86_64-w64-mingw32" builddir-x86_64-w64-mingw32'
+                sh 'ninja -C builddir-x86_64-w64-mingw32'
+            }
+        }
+        stage('Win64 install') {
+            steps {
+                sh 'ninja -C builddir-x86_64-w64-mingw32 install'
+            }
+        }
+        stage('Win64 test') {
+            steps {
+                sh 'wine ./x86_64-w64-mingw32/bin/python.exe -m test test_float'
+            }
+        }
     }
 }
+
