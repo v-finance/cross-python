@@ -25,7 +25,7 @@ pipeline {
         }
         stage('Win64 build') {
             steps {
-                sh 'meson -Dsource=../cpython --cross-file cross-files/x86_64-w64-mingw32.txt --prefix="${PWD}/x86_64-w64-mingw32" builddir-x86_64-w64-mingw32'
+                sh 'meson -Dsource=cpython --cross-file cross-files/x86_64-w64-mingw32.txt --prefix="${PWD}/x86_64-w64-mingw32" builddir-x86_64-w64-mingw32'
                 sh 'ninja -C builddir-x86_64-w64-mingw32'
             }
         }
