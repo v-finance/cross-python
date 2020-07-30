@@ -599,6 +599,9 @@ if host_machine.system()=='windows'
     # MS_WIN32 - Code specific to the MS Win32 (and Win64) API (obsolete, this covers all supported APIs)
     conf_data.set('MS_WIN32', 1) 
     conf_data.set('MS_COREDLL', 1)
+    if compiler.sizeof('void *')==8
+        conf_data.set('MS_WIN64', 1)
+    endif
 
     # These variables appear to do nothing but are in PC/pyconfig.h,
     # included here to have no diffs
@@ -2184,18 +2187,19 @@ foreach source:ctypes_sources
     CTYPES_SOURCES += join_paths(python_source, 'Modules', '_ctypes', source)
 endforeach
 
-FFI_ARGS = []
-FFI_INCLUDES = []
-if host_machine.system()=='windows'
-    FFI_INCLUDES += include_directories([
-        '/usr/i686-w64-mingw32/sys-root/mingw/lib/libffi-3.1/include/'
-    ])
-    if host_machine.cpu_family()=='x86_64'
-        FFI_ARGS += ['-DMS_WIN64']
-    endif
-endif
-
 if ffi_lib.found()
+
+    FFI_ARGS = []
+    FFI_INCLUDES = []
+    if host_machine.system()=='windows'
+        FFI_INCLUDES += include_directories([
+            '/usr/i686-w64-mingw32/sys-root/mingw/lib/libffi-3.1/include/'
+        ])
+        if host_machine.cpu_family()=='x86_64'
+            FFI_ARGS += ['-DMS_WIN64']
+        endif
+    endif
+
     shared_module(
         '_ctypes',
         CTYPES_SOURCES,
