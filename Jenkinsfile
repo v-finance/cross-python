@@ -37,9 +37,9 @@ pipeline {
         }
         stage('Win64 test') {
             steps {
-                sh 'Xvfb :10 &'
+                sh 'mkdir wine-prefix'
                 sh 'wine --version'
-                sh 'export WINEDLLOVERRIDES="mscoree,mshtml=" && export WINEPREFIX="${PWD}" && export DISPLAY=:10 && cd x86_64-w64-mingw32/bin && wine ./python.exe -m test test_float'
+                sh 'export WINEDLLOVERRIDES="mscoree,mshtml=" && export WINEPREFIX="${PWD}/wine-prefix" && export DISPLAY=:1 && cd x86_64-w64-mingw32/bin && wine ./python.exe -m test test_float'
             }
         }
     }
