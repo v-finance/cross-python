@@ -40,6 +40,7 @@ pipeline {
                 sh 'mkdir wine-prefix'
                 sh 'wine --version'
                 sh 'export WINEDLLOVERRIDES="mscoree,mshtml=" && export WINEPREFIX="${PWD}/wine-prefix" && export DISPLAY=:1 && wineconsole test_win64.bat'
+                sh 'cat x86_64-w64-mingw32/bin/test.out'
             }
         }
     }
