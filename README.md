@@ -31,7 +31,8 @@ Meson definitions are the following :
 
  - host machine is the machine on which the compiled binary will run.
  
- - target machine is the machine on which the compiled binary's output will run, only meaningful if the program produces machine-specific output.
+ - target machine is the machine on which the compiled binary's output will run.
+   Only meaningful if the program produces machine-specific output.
 
 # Cross compiling
 
@@ -39,9 +40,11 @@ Different configuration files for cross compiling are in the *cross-files* direc
 
 ## Windows (mingw)
 
- - binfmt-misc support running exe files under linux when wine is installed,
-   it creates /proc/sys/fs/binfmt_misc/wine which allows the configure tests
-   work.
+ - binfmt-misc: allows running .exe files under linux if wine is installed.
+   It creates /proc/sys/fs/binfmt_misc/wine which allows the configure tests to
+   work. On Debian there's the package `wine-binfmt`. On other distros you can
+   do `echo ':DOSWin:M::MZ::/usr/bin/wine:' > /proc/sys/fs/binfmt_misc/register.`
+   (run as root).
 
  - https://tecadmin.net/steps-install-wine-centos-rhel-fedora-systems/
 
@@ -50,12 +53,12 @@ Different configuration files for cross compiling are in the *cross-files* direc
 
     - start `winecfg`
     - Go to the `Libraries` tab
-    - Select `api-ms-win-core-path-xxx` in `New override for library`
+    - Select `api-ms-win-core-path-<WHATEVER>` from the menu in `New override for library`
     - Press `Add`
     - Select the library in `Existing overrides`, press `Edit`
     - Set the library to `disabled`
 
-Start the build script by using a cross-file :
+Start the build script by using a cross-file:
 
 ```
     meson -Dsource=../cpython --cross-file cross-files/x86_64-w64-mingw32.txt --prefix="${PWD}/x86_64-w64-mingw32" builddir-x86_64-w64-mingw32
@@ -63,13 +66,18 @@ Start the build script by using a cross-file :
     ninja -C builddir-x86_64-w64-mingw32 install
 ```
 
-To run the python for windows build, the mingw runtime library and dependencies need to be avialable in the path :
+Note that `install` doesn't install it to the system, only locally reorganize the files into a working tree.
+To run the Python for Windows build, the mingw runtime library and dependencies need to be available on the path:
 
 ```
     cd x86_64-w64-mingw32/bin
     export WINEPATH=/usr/x86_64-w64-mingw32/sys-root/mingw/bin/
     ./python.exe
 ```
+
+# License
+
+...
 
 ### Related
 
