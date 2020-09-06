@@ -77,7 +77,7 @@ To run the Python for Windows build, the mingw runtime library and dependencies 
 
 # License
 
-...
+BSD-3-Clause
 
 ### Related
 
