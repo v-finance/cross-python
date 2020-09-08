@@ -43,6 +43,18 @@ pipeline {
                 sh 'cat x86_64-w64-mingw32/bin/test.out'
             }
         }
+        stage('Win32 build') {
+            steps {
+                sh 'meson -Dsource=cpython --cross-file cross-files/i686-w64-mingw32.txt --prefix="${PWD}/i686-w64-mingw32" builddir-i686-w64-mingw32'
+                sh 'ninja -C builddir-i686-w64-mingw32'
+            }
+        }
+        stage('Win32 install') {
+            steps {
+                sh 'ninja -C builddir-i686-w64-mingw32 install'
+                sh 'cp /usr/i686-w64-mingw32/sys-root/mingw/bin/*.dll ./i686-w64-mingw32/bin/'
+            }
+        }
     }
 }
 
